@@ -35,6 +35,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+    <!-- VERCEL WEB ANALYTICS (Native HTML Injection) -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script src="/_vercel/insights/script.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -196,6 +202,8 @@
                     
                     if (error.code === 'auth/unauthorized-domain') {
                         errMsg = `Domain Error: Tambahkan URL ini ke Firebase Console > Authentication > Settings > Authorized Domains.`;
+                    } else if (error.code === 'auth/operation-not-allowed') {
+                        errMsg = "Fitur 'Google Sign-In' belum diaktifkan. Buka Firebase Console > Authentication > Sign-in method > Aktifkan Google.";
                     } else if (error.code === 'auth/popup-blocked') {
                         errMsg = "Popup diblokir oleh browser Anda. Mohon izinkan popup untuk situs ini.";
                     } else if (error.code === 'auth/popup-closed-by-user') {
