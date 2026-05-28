@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>CorpQuest | Daily Corporate Logic</title>
+
+    <!-- React & ReactDOM -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- html2canvas for screenshots -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+            colors: {
+              corp: {
+                50: '#f0fdfa',
+                100: '#ccfbf1',
+                200: '#99f6e4',
+                300: '#5eead4',
+                400: '#2dd4bf',
+                500: '#14b8a6',
+                600: '#0d9488',
+                700: '#0f766e',
+                800: '#115e59',
+                900: '#134e4a',
+              },
+            },
+            animation: {
+              shake: 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+              flip: 'flip 0.6s ease-in-out forwards',
+              pop: 'pop 0.2s ease-in-out',
+              'slide-down': 'slideDown 0.3s ease-out forwards',
+              'fade-in': 'fadeIn 0.4s ease-out',
+              'confetti-fall': 'confettiFall 3s ease-out forwards',
+            },
+            keyframes: {
+              shake: {
+                '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                '40%, 60%': { transform: 'translate3d(4px, 0, 0)' },
+              },
+              flip: {
+                '0%': { transform: 'rotateX(0)' },
+                '50%': { transform: 'rotateX(-90deg)' },
+                '100%': { transform: 'rotateX(0)' },
+              },
+              pop: {
+                '0%': { transform: 'scale(0.95)' },
+                '50%': { transform: 'scale(1.05)' },
+                '100%': { transform: 'scale(1)' },
+              },
+              slideDown: {
+                '0%': { transform: 'translateY(-15px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              confettiFall: {
+                '0%': {
+                  transform: 'translateY(-10vh) rotate(0deg)',
+                  opacity: '1',
+                },
+                '100%': {
+                  transform: 'translateY(100vh) rotate(720deg)',
+                  opacity: '0',
+                },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+      body {
+        background-color: #f8fafc;
+        color: #0f172a;
+        -webkit-font-smoothing: antialiased;
+        overscroll-behavior-y: none;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      .bg-correct {
+        background-color: #10b981 !important;
+        border-color: #10b981 !important;
+        color: white !important;
+      }
+      .bg-present {
+        background-color: #f59e0b !important;
+        border-color: #f59e0b !important;
+        color: white !important;
+      }
+      .bg-absent {
+        background-color: #64748b !important;
+        border-color: #64748b !important;
+        color: white !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect, useCallback, useRef } = React;
+
+      const EPOCH_DATE = new Date('2026-01-01T00:00:00');
+      const ADMIN_PASSWORD = '7Tanjungtirta!';
+
+      // Seeded RNG to keep puzzles consistent per day
+      const seededRNG = (seed) => {
+        let t = (seed += 0x6d2b79f5);
+        return () => {
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      };
+
+      const pickRandom = (arr, rng) => arr[Math.floor(rng() * arr.length)];
+      const shuffleArray = (arr, rng) => {
+        const newArr = [...arr];
+        for (let i = newArr.length - 1; i > 0; i--) {
+          const j = Math.floor(rng() * (i + 1));
+          [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        }
+        return newArr;
+      };
+
+      const NAMES = [
+        'Alex',
+        'Jordan',
+        'Taylor',
+        'Sam',
+        'Casey',
+        'Morgan',
+        'Riley',
+        'Jamie',
+        'Dakota',
+        'Quinn',
+        'Avery',
+        'Parker',
+      ];
+
+      // Dynamic Pools for Grid & Org Chart to ensure variations
+      const TALENT_POOLS = [
+        {
+          roles: ['UI/UX Intern', 'Backend Dev', 'IT Support', 'Data Analyst'],
+          clues: (c) => [
+            `${c[0]} has an amazing portfolio but lacks backend skills.`,
+            `The Backend Dev position must be filled by ${c[1]}.`,
+            `${c[4]} (Red Flag) demanded a salary triple our budget.`,
+            `${c[2]} loves fixing hardware and resetting passwords.`,
+            `${c[3]} excels at VBA and SQL database management.`,
+          ],
+        },
+        {
+          roles: [
+            'Scrum Master',
+            'Product Owner',
+            'QA Tester',
+            'DevOps Engineer',
+          ],
+          clues: (c) => [
+            `${c[0]} is a certified agile coach who keeps meetings strict.`,
+            `${c[3]} automates CI/CD pipelines and loves cloud servers.`,
+            `${c[1]} writes user stories and manages the product backlog.`,
+            `${c[4]} (Red Flag) refuses to use project management software.`,
+            `The QA Tester role belongs to ${c[2]}, who finds every bug.`,
+          ],
+        },
+        {
+          roles: ['Culture Officer', 'L&D Coach', 'HRBP', 'Payroll Admin'],
+          clues: (c) => [
+            `${c[1]} needs experience presenting the Happiness Program.`,
+            `${c[0]}’s thesis focused on engagement metrics.`,
+            `${c[4]} (Red Flag) was extremely rude to the receptionist.`,
+            `${c[3]} excels at calculating payroll matrices and taxes.`,
+            `${c[2]} has a strong background in mediating employee conflicts.`,
+          ],
+        },
+      ];
+
+      const ORG_POOLS = [
+        {
+          roles: ['CEO', 'CFO', 'VP of Sales', 'Sales Intern'],
+          clues: (c) => [
+            `The CEO is ${c[0]} and they make all final decisions.`,
+            `${c[2]} reports directly to the CEO and manages all revenue.`,
+            `${c[1]} controls the budget but does not manage sales.`,
+            `The entry-level position is held by ${c[3]}.`,
+            `${c[4]} (Red Flag) was fired last year for compliance issues.`,
+          ],
+        },
+        {
+          roles: ['CTO', 'Lead Dev', 'Junior Dev', 'UX Designer'],
+          clues: (c) => [
+            `${c[0]} sets the technology vision for the whole company.`,
+            `The Lead Dev, ${c[1]}, assigns daily tasks to the Junior Dev.`,
+            `${c[3]} focuses purely on user research and wireframing.`,
+            `${c[2]} just graduated and is learning the codebase.`,
+            `${c[4]} (Red Flag) applied for CTO but only knows basic HTML.`,
+          ],
+        },
+      ];
+
+      const JARGON_BANK = [
+        {
+          word: 'CHURN',
+          clue: 'The rate at which employees leave a workforce.',
+          trivia:
+            'A high churn rate can cost a company up to 1.5x the annual salary of the departing employees.',
+        },
+        {
+          word: 'AGILE',
+          clue: 'Project methodology characterized by short iterative phases.',
+          trivia:
+            'The Agile Manifesto was written in 2001 by 17 software developers at a ski resort in Utah.',
+        },
+        {
+          word: 'MERIT',
+          clue: 'Type of pay increase based on individual performance.',
+          trivia:
+            'Merit pay systems trace back to the mid-19th century when governments tried to standardize bureaucratic performance.',
+        },
+        {
+          word: 'PIVOT',
+          clue: 'A fundamental change in business strategy.',
+          trivia:
+            "YouTube famously pivoted from being a video dating site called 'Tune In Hook Up' to a general video platform.",
+        },
+        {
+          word: 'SILO',
+          clue: 'When departments do not share information with others.',
+          trivia:
+            "The term 'Silo Mentality' originally comes from agricultural silos, which keep different grains completely separated.",
+        },
+        {
+          word: 'SCOPE',
+          clue: 'The defined features and deliverables of a project.',
+          trivia:
+            "'Scope creep' is cited as the primary reason 50% of corporate IT projects go over budget.",
+        },
+      ];
+
+      const PROCESS_BANK = [
+        {
+          title: 'Standard Offboarding',
+          desc: 'Arrange chronological order of resignation.',
+          steps: [
+            'Receive Formal Resignation',
+            'Notify IT & Security',
+            'Conduct Exit Interview',
+            'Process Final Pay',
+            'Deactivate Badges',
+          ],
+          trivia:
+            'A structured offboarding process reduces the risk of data breaches from former employees by 70%.',
+        },
+        {
+          title: 'Discipline Escalation',
+          desc: 'Order the stages of progressive discipline.',
+          steps: [
+            'Verbal Warning',
+            'Written Warning',
+            'Performance Improvement Plan',
+            'Final Warning',
+            'Termination',
+          ],
+          trivia:
+            'Progressive discipline policies protect companies from wrongful termination lawsuits by establishing a documented trail of intervention.',
+        },
+        {
+          title: 'New Hire Onboarding',
+          desc: 'Order the steps to onboard a new employee.',
+          steps: [
+            'Sign Offer Letter',
+            'Background Check',
+            'IT Equipment Setup',
+            'First Day Orientation',
+            '30-Day Check-in',
+          ],
+          trivia:
+            'Organizations with a strong onboarding process improve new hire retention by 82%.',
+        },
+      ];
+
+      const ACRONYM_BANK = [
+        {
+          clue: "What does 'OKR' stand for?",
+          target: ['Objectives', 'and', 'Key', 'Results'],
+          distractors: [
+            'Organizational',
+            'Operational',
+            'Knowledge',
+            'Roles',
+            'Report',
+          ],
+          trivia:
+            'OKRs were invented by Andy Grove at Intel in the 1970s and popularized by John Doerr at Google.',
+        },
+        {
+          clue: "What does 'B2B' mean?",
+          target: ['Business', 'to', 'Business'],
+          distractors: ['Brand', 'Buyer', 'Back', 'Basics', 'Budget'],
+          trivia:
+            'B2B transactions account for the vast majority of global commerce, far exceeding B2C (Business to Consumer) volume.',
+        },
+        {
+          clue: "What does 'ROI' stand for?",
+          target: ['Return', 'on', 'Investment'],
+          distractors: [
+            'Rate',
+            'Revenue',
+            'Integration',
+            'Interest',
+            'Internal',
+          ],
+          trivia:
+            'ROI is the most common profitability metric, but it does not account for the holding period of an investment.',
+        },
+      ];
+
+      const EMAIL_BANK = [
+        {
+          clue: "How to say 'Stop ignoring me' professionally?",
+          target: ['Following', 'up', 'on', 'my', 'previous', 'email'],
+          distractors: ['Please', 'answer', 'me', 'now', 'Hey', 'Listen'],
+          trivia:
+            'The average office worker receives 121 emails per day. Polite follow-ups increase response rates by 40%.',
+        },
+        {
+          clue: "How to say 'I already told you this' professionally?",
+          target: ['As', 'indicated', 'in', 'my', 'prior', 'message'],
+          distractors: ['Like', 'I', 'said', 'before', 'Read', 'the', 'thread'],
+          trivia:
+            'Passive-aggressive emails can increase workplace stress levels, dropping productivity by an estimated 20%.',
+        },
+        {
+          clue: "How to say 'I am too busy' professionally?",
+          target: ['I', 'am', 'currently', 'at', 'capacity'],
+          distractors: ['Stop', 'giving', 'me', 'more', 'work', 'Busy'],
+          trivia:
+            'Setting clear boundaries using professional language helps prevent burnout and manages stakeholder expectations.',
+        },
+      ];
+
+      const POLICY_BANK = [
+        {
+          title: 'Anti-Bribery Policy',
+          categories: ['Compliant', 'Violation'],
+          items: [
+            { text: 'Accepting a $15 coffee card', cat: 0 },
+            { text: 'Accepting a $500 smartwatch', cat: 1 },
+            { text: 'Disclosing a minor vendor gift', cat: 0 },
+            { text: 'Hiring your spouse as a contractor secretly', cat: 1 },
+          ],
+          trivia:
+            "Most corporate gift policies consider anything under $25 to be 'nominal value' and therefore compliant.",
+        },
+        {
+          title: 'Data Security',
+          categories: ['Safe', 'Risk'],
+          items: [
+            { text: 'Using a VPN on public Wi-Fi', cat: 0 },
+            { text: 'Sending passwords via Slack', cat: 1 },
+            { text: 'Locking screen when grabbing coffee', cat: 0 },
+            { text: 'Writing API keys in a public GitHub repo', cat: 1 },
+          ],
+          trivia:
+            'Human error is the root cause of 85% of corporate cybersecurity data breaches.',
+        },
+      ];
+
+      const BENEFIT_BANK = [
+        {
+          title: 'Tax Treatment',
+          categories: ['Pre-Tax', 'Post-Tax'],
+          items: [
+            { text: '401(k) Contributions', cat: 0 },
+            { text: 'Flexible Spending Account (FSA)', cat: 0 },
+            { text: 'Roth IRA Contributions', cat: 1 },
+            { text: 'Standard Life Insurance Premium', cat: 1 },
+          ],
+          trivia:
+            'A 401(k) is literally named after subsection 401(k) of the US Internal Revenue Code established in 1978.',
+        },
+        {
+          title: 'Perks vs Benefits',
+          categories: ['Core Benefit', 'Office Perk'],
+          items: [
+            { text: 'Health Insurance', cat: 0 },
+            { text: 'Ping Pong Table', cat: 1 },
+            { text: 'Retirement Matching', cat: 0 },
+            { text: 'Free Friday Lunches', cat: 1 },
+          ],
+          trivia:
+            'While perks attract candidates, core benefits (like healthcare and retirement) are the #1 driver for long-term retention.',
+        },
+      ];
+
+      const TIMELINE_BANK = [
+        {
+          title: 'Schedule the Client Pitch',
+          people: ['Alex (NY)', 'Jordan (UK)', 'Sam (HQ)'],
+          slots: ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM'],
+          schedules: [
+            [true, true, false, false],
+            [false, false, false, true],
+            [false, true, false, false],
+          ],
+          solution: 2,
+          trivia:
+            'Finding a shared meeting time across 3 timezones takes an average of 4 emails per person without scheduling software.',
+        },
+        {
+          title: 'Emergency Sync',
+          people: ['CEO', 'Legal', 'PR Lead'],
+          slots: ['1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'],
+          schedules: [
+            [true, false, true, true],
+            [false, false, true, false],
+            [true, false, false, true],
+          ],
+          solution: 1,
+          trivia:
+            'Middle managers spend up to 35% of their working hours in meetings, making calendar synchronization a vital skill.',
+        },
+      ];
+
+      const getPuzzleDataForIndex = (dayIndex) => {
+        if (dayIndex < 0) return null;
+        const rng = seededRNG(dayIndex + 2000);
+
+        // 9 Game Rotation
+        const GAME_TYPES = [
+          'TALENT_GRID',
+          'JARGON_BUSTER',
+          'PROCESS_FLOW',
+          'ACRONYM_BUILDER',
+          'POLICY_SORTER',
+          'MEETING_MINDER',
+          'EMAIL_CRAFT',
+          'ORG_CHART',
+          'BENEFIT_SORTER',
+        ];
+
+        const gameType = GAME_TYPES[dayIndex % 9];
+        let puzzleData = {};
+
+        if (gameType === 'TALENT_GRID') {
+          const pool = pickRandom(TALENT_POOLS, rng);
+          const candidates = shuffleArray([...NAMES], rng).slice(0, 5);
+          puzzleData = {
+            roles: pool.roles,
+            candidates,
+            solution: {
+              [pool.roles[0]]: candidates[0],
+              [pool.roles[1]]: candidates[1],
+              [pool.roles[2]]: candidates[2],
+              [pool.roles[3]]: candidates[3],
+            },
+            clues: pool.clues(candidates),
+            trivia:
+              "A bad hire can cost a company up to 30% of the employee's first-year earnings in lost productivity and onboarding costs.",
+          };
+        } else if (gameType === 'ORG_CHART') {
+          const pool = pickRandom(ORG_POOLS, rng);
+          const candidates = shuffleArray([...NAMES], rng).slice(0, 5);
+          puzzleData = {
+            roles: pool.roles,
+            candidates,
+            solution: {
+              [pool.roles[0]]: candidates[0],
+              [pool.roles[1]]: candidates[1],
+              [pool.roles[2]]: candidates[2],
+              [pool.roles[3]]: candidates[3],
+            },
+            clues: pool.clues(candidates),
+            trivia:
+              'The first modern organizational chart was created in 1854 by Daniel McCallum, a railroad engineer mapping the New York and Erie Railway.',
+          };
+        } else if (gameType === 'JARGON_BUSTER')
+          puzzleData = pickRandom(JARGON_BANK, rng);
+        else if (gameType === 'PROCESS_FLOW') {
+          const base = pickRandom(PROCESS_BANK, rng);
+          puzzleData = {
+            title: base.title,
+            desc: base.desc,
+            trivia: base.trivia,
+            steps: base.steps.map((text, i) => ({
+              id: String.fromCharCode(65 + i),
+              text,
+            })),
+            solution: base.steps.map((_, i) => String.fromCharCode(65 + i)),
+          };
+        } else if (
+          gameType === 'ACRONYM_BUILDER' ||
+          gameType === 'EMAIL_CRAFT'
+        ) {
+          const base =
+            gameType === 'ACRONYM_BUILDER'
+              ? pickRandom(ACRONYM_BANK, rng)
+              : pickRandom(EMAIL_BANK, rng);
+          const wordBank = shuffleArray(
+            [...base.target, ...base.distractors],
+            rng
+          );
+          puzzleData = {
+            clue: base.clue,
+            target: base.target,
+            wordBank,
+            trivia: base.trivia,
+          };
+        } else if (
+          gameType === 'POLICY_SORTER' ||
+          gameType === 'BENEFIT_SORTER'
+        ) {
+          const base =
+            gameType === 'POLICY_SORTER'
+              ? pickRandom(POLICY_BANK, rng)
+              : pickRandom(BENEFIT_BANK, rng);
+          puzzleData = {
+            title: base.title,
+            categories: base.categories,
+            items: shuffleArray(base.items, rng),
+            trivia: base.trivia,
+          };
+        } else if (gameType === 'MEETING_MINDER') {
+          puzzleData = pickRandom(TIMELINE_BANK, rng);
+        }
+
+        const targetDate = new Date(EPOCH_DATE);
+        targetDate.setDate(targetDate.getDate() + dayIndex);
+
+        return {
+          dayIndex,
+          gameType,
+          puzzleData,
+          dateStr: targetDate.toLocaleDateString(undefined, {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+          }),
+        };
+      };
+
+      const getDayParams = () => {
+        const now = new Date();
+        const localDateStr = `${now.getFullYear()}-${String(
+          now.getMonth() + 1
+        ).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const localNow = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+        const localEpoch = new Date(
+          EPOCH_DATE.getFullYear(),
+          EPOCH_DATE.getMonth(),
+          EPOCH_DATE.getDate()
+        );
+
+        const diffTime = Math.abs(localNow - localEpoch);
+        const dayIndex = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        const { gameType, puzzleData } = getPuzzleDataForIndex(dayIndex);
+
+        let maxAttempts = 5;
+        if (gameType === 'JARGON_BUSTER') maxAttempts = 6;
+        if (
+          gameType === 'PROCESS_FLOW' ||
+          gameType === 'ACRONYM_BUILDER' ||
+          gameType === 'EMAIL_CRAFT'
+        )
+          maxAttempts = 4;
+        if (
+          ['POLICY_SORTER', 'BENEFIT_SORTER', 'MEETING_MINDER'].includes(
+            gameType
+          )
+        )
+          maxAttempts = 3;
+
+        return {
+          dayIndex,
+          gameType,
+          puzzleData,
+          maxAttempts,
+          todayStr: localDateStr,
+        };
+      };
+
+      const evaluateAttempt = (guessArray, targetArray) => {
+        let result = Array(targetArray.length).fill('absent');
+        let targetCopy = [...targetArray];
+        guessArray.forEach((val, i) => {
+          if (val === targetCopy[i]) {
+            result[i] = 'correct';
+            targetCopy[i] = null;
+          }
+        });
+        guessArray.forEach((val, i) => {
+          if (result[i] !== 'correct' && targetCopy.includes(val)) {
+            result[i] = 'present';
+            targetCopy[targetCopy.indexOf(val)] = null;
+          }
+        });
+        return result;
+      };
+
+      // UI Components
+      const Toast = ({ message, isVisible }) => (
+        <div
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 ${
+            isVisible
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 -translate-y-4 pointer-events-none'
+          }`}
+        >
+          <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl text-sm font-semibold flex items-center gap-2">
+            <i
+              data-lucide="check-circle-2"
+              className="w-4 h-4 text-emerald-400"
+            ></i>
+            {message}
+          </div>
+        </div>
+      );
+
+      const Confetti = () => {
+        const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'];
+        return (
+          <div className="fixed inset-0 pointer-events-none z-[90] overflow-hidden">
+            {[...Array(40)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-3 h-3 rounded-sm animate-confetti-fall"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  backgroundColor: colors[i % colors.length],
+                  animationDelay: `${Math.random() * 2}s`,
+                  animationDuration: `${2 + Math.random() * 2}s`,
+                }}
+              />
+            ))}
+          </div>
+        );
+      };
+
+      const GridGame = ({
+        puzzle,
+        maxAttempts,
+        gameState,
+        setGameState,
+        onGameOver,
+      }) => {
+        const [selectedCandidate, setSelectedCandidate] = useState(null);
+        const [isShaking, setIsShaking] = useState(false);
+        const { history, currentGuess, status } = gameState;
+
+        const handleSelect = (c) =>
+          status === 'playing' &&
+          setSelectedCandidate(c === selectedCandidate ? null : c);
+        const handleAssign = (role) => {
+          if (status !== 'playing') return;
+          if (selectedCandidate) {
+            const newGuess = { ...currentGuess };
+            Object.keys(newGuess).forEach((k) => {
+              if (newGuess[k] === selectedCandidate) newGuess[k] = '';
+            });
+            newGuess[role] = selectedCandidate;
+            setGameState((prev) => ({ ...prev, currentGuess: newGuess }));
+            setSelectedCandidate(null);
+          } else if (currentGuess[role] !== '') {
+            setGameState((prev) => ({
+              ...prev,
+              currentGuess: { ...prev.currentGuess, [role]: '' },
+            }));
+          }
+        };
+
+        const handleSubmit = () => {
+          if (Object.values(currentGuess).some((v) => v === '')) {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 500);
+            return;
+          }
+          const guessArray = puzzle.roles.map((r) => currentGuess[r]);
+          const evaluation = guessArray.map((guessed) => {
+            const index = puzzle.roles.findIndex(
+              (r) => currentGuess[r] === guessed
+            );
+            if (puzzle.solution[puzzle.roles[index]] === guessed)
+              return 'correct';
+            if (Object.values(puzzle.solution).includes(guessed))
+              return 'present';
+            return 'absent';
+          });
+
+          const newHistory = [
+            ...history,
+            { guess: { ...currentGuess }, evaluation },
+          ];
+          let newStatus = 'playing';
+          if (evaluation.every((e) => e === 'correct')) newStatus = 'won';
+          else if (newHistory.length >= maxAttempts) newStatus = 'lost';
+
+          const nextGuess = {};
+          if (newStatus === 'playing')
+            puzzle.roles.forEach(
+              (r, i) =>
+                (nextGuess[r] =
+                  evaluation[i] === 'correct' ? currentGuess[r] : '')
+            );
+
+          setGameState({
+            history: newHistory,
+            currentGuess: nextGuess,
+            status: newStatus,
+          });
+          if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
+        };
+
+        const assigned = Object.values(currentGuess).filter((c) => c !== '');
+
+        return (
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4 max-h-48 overflow-y-auto hide-scrollbar relative">
+              <div className="sticky top-0 bg-white pb-1 mb-2 border-b border-slate-100 z-10">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Dossier / Clues
+                </h2>
+              </div>
+              <ul className="text-sm text-slate-700 font-medium space-y-1.5">
+                {puzzle.clues.map((c, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-indigo-500 shrink-0">•</span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex-1 flex flex-col justify-center gap-2 mb-4 max-w-md mx-auto w-full">
+              {[...Array(maxAttempts)].map((_, rIdx) => {
+                const attempt = history[rIdx];
+                const isActive =
+                  rIdx === history.length && status === 'playing';
+                return (
+                  <div
+                    key={rIdx}
+                    className={`flex gap-2 ${
+                      isActive && isShaking ? 'animate-shake' : ''
+                    }`}
+                  >
+                    {puzzle.roles.map((role, cIdx) => {
+                      const state = attempt
+                        ? attempt.evaluation[cIdx]
+                        : isActive && currentGuess[role]
+                        ? 'tbd'
+                        : 'empty';
+                      const text = attempt
+                        ? attempt.guess[role]
+                        : isActive
+                        ? currentGuess[role]
+                        : '';
+                      return (
+                        <div
+                          key={cIdx}
+                          className={`flex-1 h-12 flex items-center justify-center rounded text-sm font-bold border-2 transition-all duration-500
+                                                ${
+                                                  state === 'empty'
+                                                    ? 'bg-white border-slate-200 text-slate-400'
+                                                    : ''
+                                                }
+                                                ${
+                                                  state === 'tbd'
+                                                    ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                                                    : ''
+                                                }
+                                                ${
+                                                  state === 'correct'
+                                                    ? 'bg-correct animate-flip'
+                                                    : ''
+                                                }
+                                                ${
+                                                  state === 'present'
+                                                    ? 'bg-present animate-flip'
+                                                    : ''
+                                                }
+                                                ${
+                                                  state === 'absent'
+                                                    ? 'bg-absent animate-flip'
+                                                    : ''
+                                                }
+                                            `}
+                          style={{
+                            animationDelay: attempt ? `${cIdx * 0.15}s` : '0s',
+                          }}
+                        >
+                          {text}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            {status === 'playing' && (
+              <div className="bg-white p-4 rounded-2xl shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)] border border-slate-200 mt-auto">
+                <p className="text-center text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">
+                  1. Select Name
+                </p>
+                <div className="flex flex-wrap justify-center gap-2 mb-4">
+                  {puzzle.candidates.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => handleSelect(c)}
+                      disabled={assigned.includes(c) && selectedCandidate !== c}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-bold border-2 transition-all shadow-sm ${
+                        assigned.includes(c) && selectedCandidate !== c
+                          ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed'
+                          : selectedCandidate === c
+                          ? 'bg-indigo-600 text-white border-indigo-700 scale-105 shadow-md'
+                          : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-center text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">
+                  2. Tap Role to Assign
+                </p>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {puzzle.roles.map((r) => {
+                    const isLocked =
+                      history.length > 0 &&
+                      history[history.length - 1].evaluation[
+                        puzzle.roles.indexOf(r)
+                      ] === 'correct';
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => !isLocked && handleAssign(r)}
+                        disabled={isLocked}
+                        className={`p-2 rounded-xl border-2 flex flex-col items-center justify-center h-16 transition-all ${
+                          isLocked
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            : currentGuess[r]
+                            ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-inner'
+                            : selectedCandidate
+                            ? 'border-dashed border-indigo-400 bg-indigo-50/50 animate-pulse'
+                            : 'border-dashed border-slate-300 bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-[10px] uppercase font-bold opacity-70 mb-1 leading-tight text-center">
+                          {r}
+                        </span>
+                        <span className="text-sm font-bold">
+                          {currentGuess[r]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={handleSubmit}
+                  className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold active:scale-95 transition-transform shadow-lg"
+                >
+                  Submit ({history.length}/{maxAttempts})
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const WordleGame = ({
+        puzzle,
+        maxAttempts,
+        gameState,
+        setGameState,
+        onGameOver,
+      }) => {
+        const targetWord = puzzle.word;
+        const wordLen = targetWord.length;
+        const { history, currentGuess, status } = gameState;
+        const [isShaking, setIsShaking] = useState(false);
+
+        const onKeyPress = useCallback(
+          (key) => {
+            if (status !== 'playing') return;
+            const safeGuess =
+              typeof currentGuess === 'string' ? currentGuess : '';
+            if (key === 'ENTER') {
+              if (safeGuess.length !== wordLen) {
+                setIsShaking(true);
+                setTimeout(() => setIsShaking(false), 500);
+                return;
+              }
+              const evaluation = evaluateAttempt(
+                safeGuess.split(''),
+                targetWord.split('')
+              );
+              const newHistory = [...history, { guess: safeGuess, evaluation }];
+              let newStatus = 'playing';
+              if (safeGuess === targetWord) newStatus = 'won';
+              else if (newHistory.length >= maxAttempts) newStatus = 'lost';
+              setGameState({
+                history: newHistory,
+                currentGuess: '',
+                status: newStatus,
+              });
+              if (newStatus !== 'playing')
+                onGameOver(newStatus, newHistory.length);
+            } else if (key === 'BACKSPACE') {
+              setGameState((prev) => ({
+                ...prev,
+                currentGuess: (typeof prev.currentGuess === 'string'
+                  ? prev.currentGuess
+                  : ''
+                ).slice(0, -1),
+              }));
+            } else if (safeGuess.length < wordLen && /^[A-Z]$/.test(key)) {
+              setGameState((prev) => ({
+                ...prev,
+                currentGuess:
+                  (typeof prev.currentGuess === 'string'
+                    ? prev.currentGuess
+                    : '') + key,
+              }));
+            }
+          },
+          [currentGuess, history, status, wordLen]
+        );
+
+        useEffect(() => {
+          const handleKeyDown = (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (e.key === 'Enter') onKeyPress('ENTER');
+            else if (e.key === 'Backspace') onKeyPress('BACKSPACE');
+            else {
+              const char = e.key.toUpperCase();
+              if (/^[A-Z]$/.test(char)) onKeyPress(char);
+            }
+          };
+          window.addEventListener('keydown', handleKeyDown);
+          return () => window.removeEventListener('keydown', handleKeyDown);
+        }, [onKeyPress]);
+
+        const keyColors = {};
+        history.forEach((attempt) => {
+          attempt.guess.split('').forEach((letter, i) => {
+            const evalState = attempt.evaluation[i];
+            if (evalState === 'correct') keyColors[letter] = 'bg-correct';
+            else if (
+              evalState === 'present' &&
+              keyColors[letter] !== 'bg-correct'
+            )
+              keyColors[letter] = 'bg-present';
+            else if (evalState === 'absent' && !keyColors[letter])
+              keyColors[letter] = 'bg-absent';
+          });
+        });
+
+        const keys = [
+          ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+          ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+          ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACKSPACE'],
+        ];
+        const safeGuess = typeof currentGuess === 'string' ? currentGuess : '';
+
+        return (
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 text-center">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                Definition
+              </span>
+              <p className="text-slate-800 font-semibold mt-1 text-sm md:text-base">
+                "{puzzle.clue}"
+              </p>
+            </div>
+            <div className="flex-1 flex flex-col justify-center gap-1.5 mb-6 max-w-sm mx-auto w-full">
+              {[...Array(maxAttempts)].map((_, rIdx) => {
+                const attempt = history[rIdx];
+                const isActive =
+                  rIdx === history.length && status === 'playing';
+                const wordTiles = attempt
+                  ? attempt.guess.split('')
+                  : isActive
+                  ? safeGuess.padEnd(wordLen, ' ').split('')
+                  : Array(wordLen).fill('');
+                return (
+                  <div
+                    key={rIdx}
+                    className={`flex gap-1.5 justify-center ${
+                      isActive && isShaking ? 'animate-shake' : ''
+                    }`}
+                  >
+                    {wordTiles.map((char, cIdx) => {
+                      const state = attempt
+                        ? attempt.evaluation[cIdx]
+                        : char !== ' ' && char !== ''
+                        ? 'tbd'
+                        : 'empty';
+                      return (
+                        <div
+                          key={cIdx}
+                          className={`w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded text-2xl font-bold border-2 transition-all duration-500 uppercase
+                                                ${
+                                                  state === 'empty'
+                                                    ? 'bg-transparent border-slate-200'
+                                                    : ''
+                                                }
+                                                ${
+                                                  state === 'tbd'
+                                                    ? 'bg-transparent border-slate-400 text-slate-800 animate-pop'
+                                                    : ''
+                                                }
+                                                ${
+                                                  state === 'correct'
+                                                    ? 'bg-correct animate-flip'
+                                                    : ''
+                                                }
+                                                ${
+                                                  state === 'present'
+                                                    ? 'bg-present animate-flip'
+                                                    : ''
+                                                }
+                                                ${
+                                                  state === 'absent'
+                                                    ? 'bg-absent animate-flip'
+                                                    : ''
+                                                }
+                                            `}
+                          style={{
+                            animationDelay: attempt ? `${cIdx * 0.15}s` : '0s',
+                          }}
+                        >
+                          {char}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-auto px-1 max-w-lg mx-auto w-full pb-4">
+              {keys.map((row, rIdx) => (
+                <div key={rIdx} className="flex justify-center gap-1 mb-1.5">
+                  {row.map((key) => {
+                    const isSpecial = key.length > 1;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => onKeyPress(key)}
+                        className={`h-12 md:h-14 rounded font-bold text-xs flex items-center justify-center transition-colors shadow-sm
+                                            ${
+                                              isSpecial
+                                                ? 'px-2 md:px-4 bg-slate-300 text-slate-700'
+                                                : 'flex-1 max-w-[38px] bg-slate-200 text-slate-800'
+                                            }
+                                            ${
+                                              keyColors[key] || ''
+                                            } active:scale-95`}
+                      >
+                        {key === 'BACKSPACE' ? (
+                          <i data-lucide="delete" className="w-5 h-5"></i>
+                        ) : key === 'ENTER' ? (
+                          'ENT'
+                        ) : (
+                          key
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      };
+
+      const SequenceGame = ({
+        puzzle,
+        maxAttempts,
+        gameState,
+        setGameState,
+        onGameOver,
+      }) => {
+        const { history, currentGuess, status } = gameState;
+        const [isShaking, setIsShaking] = useState(false);
+        const guessArr = Array.isArray(currentGuess) ? currentGuess : [];
+        const stepLen = puzzle.steps.length;
+
+        const handleToggleStep = (stepId) => {
+          if (status !== 'playing') return;
+          if (guessArr.includes(stepId))
+            setGameState((prev) => ({
+              ...prev,
+              currentGuess: guessArr.filter((id) => id !== stepId),
+            }));
+          else if (guessArr.length < stepLen)
+            setGameState((prev) => ({
+              ...prev,
+              currentGuess: [...guessArr, stepId],
+            }));
+        };
+
+        const handleSubmit = () => {
+          if (guessArr.length !== stepLen) {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 500);
+            return;
+          }
+          const evaluation = evaluateAttempt(guessArr, puzzle.solution);
+          const newHistory = [...history, { guess: [...guessArr], evaluation }];
+          let newStatus = 'playing';
+          if (evaluation.every((e) => e === 'correct')) newStatus = 'won';
+          else if (newHistory.length >= maxAttempts) newStatus = 'lost';
+          setGameState({
+            history: newHistory,
+            currentGuess: [],
+            status: newStatus,
+          });
+          if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
+        };
+
+        const getStepText = (id) =>
+          puzzle.steps.find((s) => s.id === id)?.text || '';
+
+        return (
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4 text-center">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                {puzzle.title}
+              </span>
+              <p className="text-slate-800 font-semibold mt-1 text-sm">
+                {puzzle.desc}
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-1 mb-4">
+              {history.map((attempt, rIdx) => (
+                <div key={rIdx} className="flex gap-1">
+                  {attempt.evaluation.map((ev, cIdx) => (
+                    <div
+                      key={cIdx}
+                      className={`w-8 h-8 rounded border flex items-center justify-center font-bold text-xs text-white ${
+                        ev === 'correct'
+                          ? 'bg-correct animate-flip'
+                          : ev === 'present'
+                          ? 'bg-present animate-flip'
+                          : 'bg-absent animate-flip'
+                      }`}
+                      style={{ animationDelay: `${cIdx * 0.15}s` }}
+                    >
+                      {attempt.guess[cIdx]}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            {status === 'playing' && (
+              <div className="mt-auto space-y-4 max-w-lg mx-auto w-full">
+                <div
+                  className={`flex flex-col gap-2 p-3 bg-slate-100 rounded-xl border border-slate-200 min-h-[180px] ${
+                    isShaking ? 'animate-shake' : ''
+                  }`}
+                >
+                  <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
+                    Your Sequence
+                  </p>
+                  {guessArr.map((id, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => handleToggleStep(id)}
+                      className="p-3 bg-white border border-indigo-300 rounded shadow-sm text-sm font-semibold flex items-center gap-3 cursor-pointer hover:bg-rose-50 transition-colors animate-pop"
+                    >
+                      <span className="w-6 h-6 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs shrink-0">
+                        {idx + 1}
+                      </span>
+                      <span className="flex-1">{getStepText(id)}</span>
+                    </div>
+                  ))}
+                  {guessArr.length === 0 && (
+                    <p className="text-slate-400 text-sm text-center py-6">
+                      Tap steps below to build sequence
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {puzzle.steps.map((step) => {
+                    if (guessArr.includes(step.id)) return null;
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => handleToggleStep(step.id)}
+                        className="p-3 bg-white border border-slate-300 hover:border-indigo-400 rounded shadow-sm text-sm font-medium text-left flex items-center gap-3 active:scale-[0.98]"
+                      >
+                        <span className="w-6 h-6 rounded bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">
+                          {step.id}
+                        </span>
+                        {step.text}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={handleSubmit}
+                  disabled={guessArr.length !== stepLen}
+                  className={`w-full py-4 rounded-xl font-bold transition-all shadow-md flex justify-center gap-2 ${
+                    guessArr.length === stepLen
+                      ? 'bg-slate-900 text-white active:scale-95'
+                      : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  }`}
+                >
+                  Evaluate Sequence ({history.length}/{maxAttempts})
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const WordBuilderGame = ({
+        puzzle,
+        maxAttempts,
+        gameState,
+        setGameState,
+        onGameOver,
+      }) => {
+        const { history, currentGuess, status } = gameState;
+        const [isShaking, setIsShaking] = useState(false);
+        const guessArr = Array.isArray(currentGuess) ? currentGuess : [];
+        const targetLen = puzzle.target.length;
+
+        const handleToggleWord = (word, sourceIdx) => {
+          if (status !== 'playing') return;
+          const uniqueId = `${word}_${sourceIdx}`;
+          if (guessArr.includes(uniqueId))
+            setGameState((prev) => ({
+              ...prev,
+              currentGuess: guessArr.filter((w) => w !== uniqueId),
+            }));
+          else if (guessArr.length < targetLen)
+            setGameState((prev) => ({
+              ...prev,
+              currentGuess: [...guessArr, uniqueId],
+            }));
+        };
+
+        const handleSubmit = () => {
+          if (guessArr.length !== targetLen) {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 500);
+            return;
+          }
+          const plainGuessArr = guessArr.map((w) => w.split('_')[0]);
+          const evaluation = evaluateAttempt(plainGuessArr, puzzle.target);
+          const newHistory = [...history, { guess: plainGuessArr, evaluation }];
+          let newStatus = 'playing';
+          if (evaluation.every((e) => e === 'correct')) newStatus = 'won';
+          else if (newHistory.length >= maxAttempts) newStatus = 'lost';
+          setGameState({
+            history: newHistory,
+            currentGuess: [],
+            status: newStatus,
+          });
+          if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
+        };
+
+        return (
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 text-center">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                Target Concept
+              </span>
+              <p className="text-slate-800 font-semibold mt-1 text-sm">
+                {puzzle.clue}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 mb-4 max-w-lg mx-auto w-full">
+              {history.map((attempt, rIdx) => (
+                <div key={rIdx} className="flex flex-wrap gap-1 justify-center">
+                  {attempt.guess.map((word, wIdx) => (
+                    <span
+                      key={wIdx}
+                      className={`px-2 py-1 text-xs font-bold rounded text-white ${
+                        attempt.evaluation[wIdx] === 'correct'
+                          ? 'bg-correct animate-flip'
+                          : attempt.evaluation[wIdx] === 'present'
+                          ? 'bg-present animate-flip'
+                          : 'bg-absent animate-flip'
+                      }`}
+                      style={{ animationDelay: `${wIdx * 0.1}s` }}
+                    >
+                      {word}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {status === 'playing' && (
+              <div className="mt-auto space-y-4 max-w-lg mx-auto w-full pb-4">
+                <div
+                  className={`p-4 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 min-h-[100px] flex flex-wrap gap-2 items-start content-start ${
+                    isShaking ? 'animate-shake' : ''
+                  }`}
+                >
+                  {guessArr.map((uniqueId) => {
+                    const word = uniqueId.split('_')[0];
+                    const sourceIdx = uniqueId.split('_')[1];
+                    return (
+                      <button
+                        key={uniqueId}
+                        onClick={() => handleToggleWord(word, sourceIdx)}
+                        className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow-sm text-sm font-bold hover:bg-rose-500 transition-colors animate-pop"
+                      >
+                        {word}
+                      </button>
+                    );
+                  })}
+                  {guessArr.length === 0 && (
+                    <span className="text-slate-400 text-sm mx-auto my-auto py-4">
+                      Tap words below to build the phrase ({targetLen} words)
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {puzzle.wordBank.map((word, idx) => {
+                    const uniqueId = `${word}_${idx}`;
+                    if (guessArr.includes(uniqueId)) return null;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleToggleWord(word, idx)}
+                        className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg shadow-sm text-sm font-semibold hover:border-indigo-400 active:scale-95 transition-all"
+                      >
+                        {word}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={handleSubmit}
+                  disabled={guessArr.length !== targetLen}
+                  className={`w-full py-4 rounded-xl font-bold transition-all shadow-md ${
+                    guessArr.length === targetLen
+                      ? 'bg-slate-900 text-white active:scale-95'
+                      : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  }`}
+                >
+                  Check Phrase ({history.length}/{maxAttempts})
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const CategorizerGame = ({
+        puzzle,
+        maxAttempts,
+        gameState,
+        setGameState,
+        onGameOver,
+      }) => {
+        const { history, currentGuess, status } = gameState;
+        const [selectedItem, setSelectedItem] = useState(null);
+        const [isShaking, setIsShaking] = useState(false);
+
+        // Safe fallback for state structure changes
+        const isSafeGuess =
+          currentGuess &&
+          typeof currentGuess === 'object' &&
+          !Array.isArray(currentGuess) &&
+          '0' in currentGuess &&
+          '1' in currentGuess;
+        const guessObj = isSafeGuess ? currentGuess : { 0: [], 1: [] };
+
+        const handleSelectItem = (idx) =>
+          status === 'playing' &&
+          setSelectedItem(selectedItem === idx ? null : idx);
+        const handleAssignCategory = (catId) => {
+          if (status !== 'playing') return;
+          if (selectedItem !== null) {
+            const newObj = {
+              0: guessObj[0].filter((i) => i !== selectedItem),
+              1: guessObj[1].filter((i) => i !== selectedItem),
+            };
+            newObj[catId].push(selectedItem);
+            setGameState((prev) => ({ ...prev, currentGuess: newObj }));
+            setSelectedItem(null);
+          }
+        };
+        const handleUnassign = (itemIdx) => {
+          if (status !== 'playing') return;
+          setGameState((prev) => ({
+            ...prev,
+            currentGuess: {
+              0: guessObj[0].filter((i) => i !== itemIdx),
+              1: guessObj[1].filter((i) => i !== itemIdx),
+            },
+          }));
+        };
+
+        const handleSubmit = () => {
+          if (guessObj[0].length + guessObj[1].length !== puzzle.items.length) {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 500);
+            return;
+          }
+
+          let mistakes = 0;
+          puzzle.items.forEach((item, idx) => {
+            if (guessObj[0].includes(idx) && item.cat !== 0) mistakes++;
+            if (guessObj[1].includes(idx) && item.cat !== 1) mistakes++;
+          });
+
+          const isWin = mistakes === 0;
+          const newHistory = [...history, { mistakes }];
+          let newStatus = 'playing';
+          if (isWin) newStatus = 'won';
+          else if (newHistory.length >= maxAttempts) newStatus = 'lost';
+
+          setGameState({
+            history: newHistory,
+            currentGuess: guessObj,
+            status: newStatus,
+          });
+          if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
+          else {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 500);
+          }
+        };
+
+        const unassigned = puzzle.items
+          .map((_, i) => i)
+          .filter((i) => !guessObj[0].includes(i) && !guessObj[1].includes(i));
+
+        return (
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4 text-center">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                {puzzle.title}
+              </span>
+              <p className="text-slate-800 font-semibold mt-1 text-sm">
+                Sort all items into the correct categories.
+              </p>
+            </div>
+
+            <div className="flex justify-center gap-2 mb-4 flex-wrap">
+              {history.map((attempt, i) => (
+                <div
+                  key={i}
+                  className="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold border border-rose-200 animate-pop"
+                >
+                  {attempt.mistakes} Error{attempt.mistakes > 1 ? 's' : ''}
+                </div>
+              ))}
+            </div>
+
+            {status === 'playing' && (
+              <div
+                className={`mt-auto space-y-4 max-w-lg mx-auto w-full pb-4 ${
+                  isShaking ? 'animate-shake' : ''
+                }`}
+              >
+                <div className="flex flex-wrap justify-center gap-2 min-h-[60px]">
+                  {unassigned.map((idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSelectItem(idx)}
+                      className={`px-3 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all shadow-sm ${
+                        selectedItem === idx
+                          ? 'bg-indigo-600 text-white border-indigo-700 scale-105'
+                          : 'bg-white border-slate-300 text-slate-700 hover:border-indigo-400'
+                      }`}
+                    >
+                      {puzzle.items[idx].text}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {[0, 1].map((catId) => (
+                    <div
+                      key={catId}
+                      onClick={() =>
+                        selectedItem !== null && handleAssignCategory(catId)
+                      }
+                      className={`p-3 rounded-xl border-2 min-h-[150px] flex flex-col transition-colors ${
+                        selectedItem !== null
+                          ? 'border-dashed border-indigo-400 bg-indigo-50/30 cursor-pointer animate-pulse'
+                          : 'border-slate-200 bg-slate-50'
+                      }`}
+                    >
+                      <div className="text-center text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 pb-2 border-b border-slate-200">
+                        {puzzle.categories[catId]}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {guessObj[catId].map((idx) => (
+                          <div
+                            key={idx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnassign(idx);
+                            }}
+                            className="p-2 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-700 text-center shadow-sm cursor-pointer hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 animate-pop"
+                          >
+                            {puzzle.items[idx].text}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleSubmit}
+                  className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg active:scale-95 transition-transform"
+                >
+                  Verify Sorting ({history.length}/{maxAttempts})
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const TimelineGame = ({
+        puzzle,
+        maxAttempts,
+        gameState,
+        setGameState,
+        onGameOver,
+      }) => {
+        const { history, currentGuess, status } = gameState;
+        const [isShaking, setIsShaking] = useState(false);
+
+        const handleSelect = (idx) =>
+          status === 'playing' &&
+          setGameState((prev) => ({ ...prev, currentGuess: idx }));
+
+        const handleSubmit = () => {
+          if (currentGuess === '' || currentGuess === null) {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 500);
+            return;
+          }
+          const isWin = currentGuess === puzzle.solution;
+          const newHistory = [...history, { guess: currentGuess, isWin }];
+          let newStatus = 'playing';
+          if (isWin) newStatus = 'won';
+          else if (newHistory.length >= maxAttempts) newStatus = 'lost';
+          setGameState({
+            history: newHistory,
+            currentGuess: '',
+            status: newStatus,
+          });
+          if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
+          else {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 500);
+          }
+        };
+
+        return (
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4 text-center">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                {puzzle.title}
+              </span>
+              <p className="text-slate-800 font-semibold mt-1 text-sm">
+                Find the only time slot where everyone is free.
+              </p>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4 overflow-x-auto">
+              <div className="min-w-[280px]">
+                <div className="flex mb-2">
+                  <div className="w-20 shrink-0"></div>
+                  {puzzle.slots.map((s) => (
+                    <div
+                      key={s}
+                      className="flex-1 text-center text-[10px] font-bold text-slate-400"
+                    >
+                      {s}
+                    </div>
+                  ))}
+                </div>
+                {puzzle.people.map((person, pIdx) => (
+                  <div key={pIdx} className="flex items-center mb-2">
+                    <div className="w-20 shrink-0 text-xs font-semibold text-slate-600 truncate pr-2">
+                      {person}
+                    </div>
+                    <div className="flex-1 flex gap-1">
+                      {puzzle.schedules[pIdx].map((isBusy, sIdx) => (
+                        <div
+                          key={sIdx}
+                          className={`flex-1 h-8 rounded border ${
+                            isBusy
+                              ? 'bg-rose-100 border-rose-200'
+                              : 'bg-emerald-50 border-emerald-100'
+                          }`}
+                        >
+                          {isBusy && (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <i
+                                data-lucide="lock"
+                                className="w-3 h-3 text-rose-400"
+                              ></i>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-center gap-2 mb-4">
+              {history.map((attempt, i) => (
+                <div
+                  key={i}
+                  className="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold border border-rose-200"
+                >
+                  {puzzle.slots[attempt.guess]} ❌
+                </div>
+              ))}
+            </div>
+
+            {status === 'playing' && (
+              <div
+                className={`mt-auto space-y-4 max-w-lg mx-auto w-full pb-4 ${
+                  isShaking ? 'animate-shake' : ''
+                }`}
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  {puzzle.slots.map((slot, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSelect(idx)}
+                      className={`p-3 md:p-4 rounded-xl font-bold border-2 transition-all ${
+                        currentGuess === idx
+                          ? 'bg-indigo-600 text-white border-indigo-700 shadow-md scale-105'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400'
+                      }`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={handleSubmit}
+                  className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg active:scale-95 transition-transform mt-2"
+                >
+                  Book Meeting ({history.length}/{maxAttempts})
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const Modals = ({
+        showHelp,
+        setShowHelp,
+        showStats,
+        setShowStats,
+        stats,
+        timeToMidnight,
+        handleShare,
+        gameType,
+        gameStatus,
+        puzzle,
+        shareImage,
+        setShareImage,
+        isCapturing,
+        downloadImage,
+        shareToApps,
+      }) => {
+        const GameTitle = gameType.replace('_', ' ');
+
+        return (
+          <>
+            {showHelp && (
+              <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative animate-slide-down">
+                  <button
+                    onClick={() => setShowHelp(false)}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-800"
+                  >
+                    <i data-lucide="x" className="w-5 h-5"></i>
+                  </button>
+                  <h2 className="text-xl font-bold mb-1">How to Play</h2>
+                  <h3 className="text-sm font-semibold text-indigo-600 mb-4">
+                    {GameTitle}
+                  </h3>
+                  <p className="text-sm text-slate-600 mb-6">
+                    Solve the daily corporate logic puzzle before you run out of
+                    attempts. Logic rules change depending on the daily game
+                    mode.
+                  </p>
+                  <button
+                    onClick={() => setShowHelp(false)}
+                    className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold mt-2"
+                  >
+                    Let's Play
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showStats && (
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+                <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl relative animate-slide-down my-auto overflow-hidden">
+                  <button
+                    data-html2canvas-ignore
+                    onClick={() => {
+                      setShowStats(false);
+                      setShareImage(null);
+                    }}
+                    className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 z-10"
+                  >
+                    <i data-lucide="x" className="w-5 h-5"></i>
+                  </button>
+
+                  <div id="capture-node" className="p-6 bg-white relative">
+                    <div className="text-center mb-6 border-b border-slate-100 pb-4">
+                      <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+                        CorpQuest
+                      </h1>
+                      <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">
+                        {GameTitle}
+                      </p>
+                    </div>
+
+                    {gameStatus !== 'playing' && (
+                      <div className="mb-6 border-b border-slate-100 pb-6 text-center">
+                        <div className="text-5xl mb-3">
+                          {gameStatus === 'won' ? '🏆' : '📉'}
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-1">
+                          {gameStatus === 'won'
+                            ? 'Excellent Work!'
+                            : 'Tough Luck.'}
+                        </h2>
+                        <p className="text-sm text-slate-500">
+                          Come back tomorrow for a new challenge.
+                        </p>
+                      </div>
+                    )}
+
+                    {gameStatus === 'won' && puzzle?.trivia && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left shadow-sm">
+                        <h4 className="flex items-center gap-2 text-amber-800 font-bold mb-2">
+                          <i data-lucide="lightbulb" className="w-5 h-5"></i>{' '}
+                          Fun Fact
+                        </h4>
+                        <p className="text-sm text-amber-900 leading-relaxed font-medium">
+                          {puzzle.trivia}
+                        </p>
+                      </div>
+                    )}
+
+                    <h3 className="text-sm font-bold uppercase text-slate-400 mb-4 text-center">
+                      {GameTitle} Stats
+                    </h3>
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">
+                          {stats.played}
+                        </span>
+                        <span className="text-[10px] uppercase text-slate-500">
+                          Played
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">
+                          {stats.played > 0
+                            ? Math.round((stats.wins / stats.played) * 100)
+                            : 0}
+                        </span>
+                        <span className="text-[10px] uppercase text-slate-500">
+                          Win %
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">
+                          {stats.currentStreak}
+                        </span>
+                        <span className="text-[10px] uppercase text-slate-500">
+                          Streak
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xl font-bold">
+                          {stats.maxStreak}
+                        </span>
+                        <span className="text-[10px] uppercase text-slate-500">
+                          Max
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {gameStatus !== 'playing' && (
+                    <div data-html2canvas-ignore className="p-6 pt-0 bg-white">
+                      {shareImage ? (
+                        <div className="flex flex-col gap-3 animate-fade-in">
+                          <div className="text-center text-xs font-bold text-slate-400 uppercase">
+                            Preview Share
+                          </div>
+                          <img
+                            src={shareImage}
+                            className="w-48 mx-auto rounded-lg border-2 border-slate-200 shadow-md mb-2"
+                            alt="Screenshot Result"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={downloadImage}
+                              className="flex-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl py-3 font-bold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+                            >
+                              <i data-lucide="download" className="w-4 h-4"></i>{' '}
+                              Save Image
+                            </button>
+                            <button
+                              onClick={shareToApps}
+                              className="flex-1 bg-gradient-to-tr from-pink-500 to-orange-400 text-white hover:opacity-90 rounded-xl py-3 font-bold text-sm transition-opacity shadow-md flex items-center justify-center gap-2"
+                            >
+                              <i
+                                data-lucide="instagram"
+                                className="w-4 h-4"
+                              ></i>{' '}
+                              IG Story
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => setShareImage(null)}
+                            className="w-full text-xs text-slate-500 mt-2 font-bold py-2 hover:text-slate-800"
+                          >
+                            Batalkan
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-3">
+                          <div className="flex-1 bg-slate-100 rounded-xl p-3 text-center border border-slate-200">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">
+                              Next Puzzle
+                            </p>
+                            <p className="text-lg font-mono font-bold text-slate-800">
+                              {timeToMidnight}
+                            </p>
+                          </div>
+                          <button
+                            onClick={handleShare}
+                            disabled={isCapturing}
+                            className="flex-1 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shadow-md"
+                          >
+                            {isCapturing ? (
+                              'Capturing...'
+                            ) : (
+                              <>
+                                <i data-lucide="camera" className="w-4 h-4"></i>{' '}
+                                Screenshot
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      };
+
+      const AdminPanel = ({ isVisible, onClose, currentDayIndex }) => {
+        const [activeTab, setActiveTab] = useState(0);
+        if (!isVisible) return null;
+
+        const tabs = [
+          { id: -1, label: 'Yesterday' },
+          { id: 0, label: 'Today' },
+          { id: 1, label: 'Tomorrow' },
+        ];
+        const activeData = getPuzzleDataForIndex(currentDayIndex + activeTab);
+
+        const renderSolution = () => {
+          if (!activeData)
+            return (
+              <div className="p-8 text-center text-slate-500">
+                No puzzle scheduled.
+              </div>
+            );
+          const { gameType, puzzleData } = activeData;
+
+          if (gameType === 'TALENT_GRID' || gameType === 'ORG_CHART') {
+            const distractor = puzzleData.candidates.find(
+              (c) => !Object.values(puzzleData.solution).includes(c)
+            );
+            return (
+              <div className="space-y-4 animate-slide-down">
+                <div className="grid grid-cols-1 gap-2">
+                  {Object.entries(puzzleData.solution).map(([role, person]) => (
+                    <div
+                      key={role}
+                      className="flex justify-between items-center bg-emerald-50 p-2.5 rounded-lg border border-emerald-100"
+                    >
+                      <span className="text-xs font-semibold text-slate-700">
+                        {role}
+                      </span>
+                      <span className="text-sm font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                        {person}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-rose-50 border border-rose-100 p-3 rounded-lg flex justify-between">
+                  <span className="text-[10px] font-bold text-rose-500 uppercase">
+                    Red Flag
+                  </span>
+                  <span className="text-sm font-bold text-rose-700">
+                    {distractor}
+                  </span>
+                </div>
+              </div>
+            );
+          }
+          if (gameType === 'JARGON_BUSTER')
+            return (
+              <div className="text-center p-4">
+                <p className="text-sm italic mb-4">"{puzzleData.clue}"</p>
+                <p className="text-3xl font-bold tracking-[0.2em] text-emerald-600">
+                  {puzzleData.word}
+                </p>
+              </div>
+            );
+          if (gameType === 'PROCESS_FLOW')
+            return (
+              <div className="space-y-2">
+                {puzzleData.solution.map((stepId, idx) => (
+                  <div
+                    key={stepId}
+                    className="flex gap-3 items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100"
+                  >
+                    <span className="w-6 h-6 rounded bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold">
+                      {idx + 1}
+                    </span>
+                    <span className="text-xs font-semibold text-emerald-900">
+                      {puzzleData.steps.find((s) => s.id === stepId).text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          if (gameType === 'ACRONYM_BUILDER' || gameType === 'EMAIL_CRAFT')
+            return (
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                <p className="text-xs text-emerald-600 font-bold uppercase mb-2">
+                  Target Phrase
+                </p>
+                <p className="text-lg font-bold text-emerald-900">
+                  {puzzleData.target.join(' ')}
+                </p>
+              </div>
+            );
+          if (gameType === 'POLICY_SORTER' || gameType === 'BENEFIT_SORTER')
+            return (
+              <div className="grid grid-cols-2 gap-2">
+                {[0, 1].map((catId) => (
+                  <div
+                    key={catId}
+                    className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg"
+                  >
+                    <p className="text-xs font-bold text-emerald-700 uppercase mb-2">
+                      {puzzleData.categories[catId]}
+                    </p>
+                    <ul className="text-xs text-emerald-900 space-y-1 list-disc pl-3">
+                      {puzzleData.items
+                        .filter((i) => i.cat === catId)
+                        .map((i, idx) => (
+                          <li key={idx}>{i.text}</li>
+                        ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            );
+          if (gameType === 'MEETING_MINDER')
+            return (
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                <p className="text-xs text-emerald-600 font-bold uppercase mb-2">
+                  Correct Time Slot
+                </p>
+                <p className="text-2xl font-bold text-emerald-900">
+                  {puzzleData.slots[puzzleData.solution]}
+                </p>
+              </div>
+            );
+
+          return null;
+        };
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden">
+              <div className="bg-slate-900 p-5 flex justify-between items-center text-white">
+                <div className="flex items-center gap-3">
+                  <i
+                    data-lucide="shield"
+                    className="w-5 h-5 text-indigo-400"
+                  ></i>
+                  <div>
+                    <h2 className="font-bold leading-tight">Admin Portal</h2>
+                    <p className="text-[10px] text-slate-400 font-medium tracking-wide">
+                      PUZZLE DATA PREVIEW
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full"
+                >
+                  <i data-lucide="x" className="w-4 h-4"></i>
+                </button>
+              </div>
+              <div className="flex p-2 bg-slate-50 border-b border-slate-200">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-white text-indigo-700 shadow border border-slate-100'
+                        : 'text-slate-500'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="p-6 overflow-y-auto hide-scrollbar flex-1 bg-white">
+                {activeData && (
+                  <div className="mb-5 flex justify-between items-end border-b border-slate-100 pb-4">
+                    <div>
+                      <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">
+                        {activeData.gameType.replace('_', ' ')}
+                      </div>
+                      <div className="text-lg font-bold text-slate-800 leading-none">
+                        {activeData.dateStr}
+                      </div>
+                    </div>
+                    <div className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+                      Day #{activeData.dayIndex + 1}
+                    </div>
+                  </div>
+                )}
+                {renderSolution()}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const DEFAULT_STATS = {
+        played: 0,
+        wins: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+      };
+
+      function App() {
+        const params = getDayParams();
+        const [gameState, setGameState] = useState({
+          history: [],
+          currentGuess: null,
+          status: 'playing',
+        });
+        const [allStats, setAllStats] = useState({});
+
+        const [showHelp, setShowHelp] = useState(false);
+        const [showStats, setShowStats] = useState(false);
+        const [showAdminAuth, setShowAdminAuth] = useState(false);
+        const [adminPwd, setAdminPwd] = useState('');
+        const [showAdmin, setShowAdmin] = useState(false);
+        const [timeToMidnight, setTimeToMidnight] = useState('00:00:00');
+        const [toastMsg, setToastMsg] = useState('');
+        const [shareImage, setShareImage] = useState(null);
+        const [isCapturing, setIsCapturing] = useState(false);
+
+        useEffect(() => {
+          const savedStats =
+            JSON.parse(localStorage.getItem('corpQuestStats_v3')) || {};
+          setAllStats(savedStats);
+
+          const savedStateRaw = localStorage.getItem('corpQuestState_v3');
+          let loadedState = false;
+
+          if (savedStateRaw) {
+            try {
+              const parsed = JSON.parse(savedStateRaw);
+              if (
+                parsed.date === params.todayStr &&
+                parsed.gameType === params.gameType
+              ) {
+                setGameState(parsed.gameState);
+                loadedState = true;
+              }
+            } catch (e) {
+              console.error('Corrupt local storage data, starting fresh.');
+            }
+          }
+
+          if (!loadedState) {
+            let initialGuess = '';
+            if (
+              params.gameType === 'TALENT_GRID' ||
+              params.gameType === 'ORG_CHART'
+            ) {
+              initialGuess = {};
+              params.puzzleData.roles.forEach((r) => (initialGuess[r] = ''));
+            } else if (
+              params.gameType === 'PROCESS_FLOW' ||
+              params.gameType === 'ACRONYM_BUILDER' ||
+              params.gameType === 'EMAIL_CRAFT'
+            ) {
+              initialGuess = [];
+            } else if (
+              params.gameType === 'POLICY_SORTER' ||
+              params.gameType === 'BENEFIT_SORTER'
+            ) {
+              initialGuess = { 0: [], 1: [] };
+            }
+            setGameState({
+              history: [],
+              currentGuess: initialGuess,
+              status: 'playing',
+            });
+            if (!savedStats[params.gameType]) setShowHelp(true);
+          }
+
+          if (window.lucide) setTimeout(() => window.lucide.createIcons(), 100);
+        }, []);
+
+        useEffect(() => {
+          if (window.lucide) window.lucide.createIcons();
+        });
+
+        useEffect(() => {
+          if (gameState.history.length > 0 || gameState.status !== 'playing') {
+            localStorage.setItem(
+              'corpQuestState_v3',
+              JSON.stringify({
+                date: params.todayStr,
+                gameType: params.gameType,
+                gameState,
+              })
+            );
+          }
+        }, [gameState]);
+
+        useEffect(() => {
+          const timer = setInterval(() => {
+            const now = new Date();
+            const midnight = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate() + 1,
+              0,
+              0,
+              0
+            );
+            const diff = midnight - now;
+            const h = Math.floor(
+              (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+            );
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            setTimeToMidnight(
+              `${String(h).padStart(2, '0')}:${String(m).padStart(
+                2,
+                '0'
+              )}:${String(s).padStart(2, '0')}`
+            );
+            if (h === 0 && m === 0 && s === 0) window.location.reload();
+          }, 1000);
+          return () => clearInterval(timer);
+        }, []);
+
+        const triggerToast = (msg) => {
+          setToastMsg(msg);
+          setTimeout(() => setToastMsg(''), 3000);
+        };
+
+        const handleGameOver = (status, attempts) => {
+          const currentStats = allStats[params.gameType] || {
+            ...DEFAULT_STATS,
+          };
+          const newStats = { ...currentStats, played: currentStats.played + 1 };
+          if (status === 'won') {
+            newStats.wins += 1;
+            newStats.currentStreak += 1;
+            newStats.maxStreak = Math.max(
+              newStats.maxStreak,
+              newStats.currentStreak
+            );
+          } else newStats.currentStreak = 0;
+
+          const updatedAllStats = { ...allStats, [params.gameType]: newStats };
+          setAllStats(updatedAllStats);
+          localStorage.setItem(
+            'corpQuestStats_v3',
+            JSON.stringify(updatedAllStats)
+          );
+          setTimeout(() => setShowStats(true), 1500);
+        };
+
+        const submitAdminPwd = () => {
+          if (adminPwd === ADMIN_PASSWORD) {
+            setShowAdminAuth(false);
+            setAdminPwd('');
+            setShowAdmin(true);
+          } else {
+            triggerToast('Password Salah!');
+          }
+        };
+
+        const handleShare = async () => {
+          setIsCapturing(true);
+          try {
+            if (!window.html2canvas) {
+              triggerToast('Sistem error: screenshot library belum termuat.');
+              setIsCapturing(false);
+              return;
+            }
+
+            const element = document.getElementById('capture-node');
+            // Menghilangkan border radius sesaat agar hasil tangkapan kotak bersih
+            const originalRadius = element.style.borderRadius;
+            element.style.borderRadius = '0px';
+
+            const canvas = await window.html2canvas(element, {
+              scale: 2, // Resolusi tinggi (Retina)
+              backgroundColor: '#ffffff',
+              useCORS: true,
+            });
+
+            element.style.borderRadius = originalRadius; // Kembalikan style
+
+            const dataUrl = canvas.toDataURL('image/png');
+            setShareImage(dataUrl);
+          } catch (err) {
+            console.error(err);
+            triggerToast('Gagal mengambil screenshot.');
+          }
+          setIsCapturing(false);
+        };
+
+        const downloadImage = () => {
+          if (!shareImage) return;
+          const a = document.createElement('a');
+          a.href = shareImage;
+          a.download = `CorpQuest-${params.todayStr}.png`;
+          a.click();
+        };
+
+        const shareToApps = async () => {
+          if (!shareImage) return;
+          try {
+            // Convert DataURL ke Blob/File agar bisa dikirim ke OS Native
+            const res = await fetch(shareImage);
+            const blob = await res.blob();
+            const file = new File([blob], `CorpQuest-${params.todayStr}.png`, {
+              type: 'image/png',
+            });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: 'My CorpQuest Result',
+                files: [file],
+              });
+            } else {
+              triggerToast(
+                'Browser ini tidak mendukung direct share. Silakan klik Save Image.'
+              );
+            }
+          } catch (err) {
+            console.error(err);
+            triggerToast('Batal membagikan gambar.');
+          }
+        };
+
+        return (
+          <div className="max-w-md mx-auto min-h-screen flex flex-col relative bg-slate-50 shadow-2xl overflow-hidden">
+            {gameState.status === 'won' && <Confetti />}
+            <Toast message={toastMsg} isVisible={!!toastMsg} />
+
+            <header className="flex justify-between items-center p-4 border-b border-slate-200 bg-white sticky top-0 z-10">
+              <div className="flex-1 flex gap-1">
+                <button
+                  onClick={() => setShowAdminAuth(true)}
+                  className="p-2 text-slate-400 hover:text-indigo-600 transition rounded-full hover:bg-indigo-50"
+                >
+                  <i data-lucide="shield" className="w-5 h-5"></i>
+                </button>
+                <button
+                  onClick={() => setShowHelp(true)}
+                  className="p-2 text-slate-400 hover:text-slate-800 transition rounded-full hover:bg-slate-100"
+                >
+                  <i data-lucide="help-circle" className="w-5 h-5"></i>
+                </button>
+              </div>
+              <div className="text-center shrink-0">
+                <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">
+                  CorpQuest
+                </h1>
+                <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">
+                  {params.gameType.replace('_', ' ')}
+                </p>
+              </div>
+              <div className="flex-1 flex justify-end">
+                <button
+                  onClick={() => setShowStats(true)}
+                  className="p-2 text-slate-400 hover:text-slate-800 transition rounded-full hover:bg-slate-100 relative"
+                >
+                  <i data-lucide="bar-chart-2" className="w-5 h-5"></i>
+                  {gameState.status !== 'playing' && (
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>
+                  )}
+                </button>
+              </div>
+            </header>
+
+            <main className="flex-1 p-4 flex flex-col overflow-y-auto hide-scrollbar relative z-0">
+              {(params.gameType === 'TALENT_GRID' ||
+                params.gameType === 'ORG_CHART') && (
+                <GridGame
+                  puzzle={params.puzzleData}
+                  maxAttempts={params.maxAttempts}
+                  gameState={gameState}
+                  setGameState={setGameState}
+                  onGameOver={handleGameOver}
+                />
+              )}
+              {params.gameType === 'JARGON_BUSTER' && (
+                <WordleGame
+                  puzzle={params.puzzleData}
+                  maxAttempts={params.maxAttempts}
+                  gameState={gameState}
+                  setGameState={setGameState}
+                  onGameOver={handleGameOver}
+                />
+              )}
+              {params.gameType === 'PROCESS_FLOW' && (
+                <SequenceGame
+                  puzzle={params.puzzleData}
+                  maxAttempts={params.maxAttempts}
+                  gameState={gameState}
+                  setGameState={setGameState}
+                  onGameOver={handleGameOver}
+                />
+              )}
+              {(params.gameType === 'ACRONYM_BUILDER' ||
+                params.gameType === 'EMAIL_CRAFT') && (
+                <WordBuilderGame
+                  puzzle={params.puzzleData}
+                  maxAttempts={params.maxAttempts}
+                  gameState={gameState}
+                  setGameState={setGameState}
+                  onGameOver={handleGameOver}
+                />
+              )}
+              {(params.gameType === 'POLICY_SORTER' ||
+                params.gameType === 'BENEFIT_SORTER') && (
+                <CategorizerGame
+                  puzzle={params.puzzleData}
+                  maxAttempts={params.maxAttempts}
+                  gameState={gameState}
+                  setGameState={setGameState}
+                  onGameOver={handleGameOver}
+                />
+              )}
+              {params.gameType === 'MEETING_MINDER' && (
+                <TimelineGame
+                  puzzle={params.puzzleData}
+                  maxAttempts={params.maxAttempts}
+                  gameState={gameState}
+                  setGameState={setGameState}
+                  onGameOver={handleGameOver}
+                />
+              )}
+            </main>
+
+            <Modals
+              showHelp={showHelp}
+              setShowHelp={setShowHelp}
+              showStats={showStats}
+              setShowStats={setShowStats}
+              stats={allStats[params.gameType] || DEFAULT_STATS}
+              timeToMidnight={timeToMidnight}
+              handleShare={handleShare}
+              gameType={params.gameType}
+              gameStatus={gameState.status}
+              puzzle={params.puzzleData}
+              shareImage={shareImage}
+              setShareImage={setShareImage}
+              isCapturing={isCapturing}
+              downloadImage={downloadImage}
+              shareToApps={shareToApps}
+            />
+
+            <AdminPanel
+              isVisible={showAdmin}
+              onClose={() => setShowAdmin(false)}
+              currentDayIndex={params.dayIndex}
+            />
+
+            {showAdminAuth && (
+              <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-pop text-center">
+                  <h3 className="font-bold text-lg mb-2">Admin Access</h3>
+                  <p className="text-sm text-slate-500 mb-4">
+                    Masukkan password untuk melihat jawaban (Portal Admin).
+                  </p>
+                  <input
+                    type="password"
+                    value={adminPwd}
+                    onChange={(e) => setAdminPwd(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && submitAdminPwd()}
+                    className="w-full p-3 border border-slate-200 rounded-xl mb-4 text-center tracking-widest focus:outline-indigo-500"
+                    placeholder="••••••••"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowAdminAuth(false);
+                        setAdminPwd('');
+                      }}
+                      className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={submitAdminPwd}
+                      className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700"
+                    >
+                      Masuk
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
