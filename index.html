@@ -95,6 +95,7 @@
             }
         }
 
+        // Initialize Real Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAgZUtc5aZguYz_MW5zISkuLvDgPmDixfg",
             authDomain: "meratus-frd-lms-10276.firebaseapp.com",
@@ -117,7 +118,7 @@
         
         .bg-correct { background-color: #10b981 !important; border-color: #10b981 !important; color: white !important; }
         .bg-present { background-color: #f59e0b !important; border-color: #f59e0b !important; color: white !important; }
-        .bg-absent { background-color: #64748b !important; border-color: #64748b !important; color: white !important; }
+        .bg-absent { background-color: #f43f5e !important; border-color: #e11d48 !important; color: white !important; } 
         
         .crossword-cell:focus { outline: none; box-shadow: inset 0 0 0 3px #6366f1; }
         .crossword-active-word { background-color: #e0e7ff; }
@@ -149,7 +150,8 @@
                 'trophy': <g><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2Z"/></g>,
                 'log-out': <g><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></g>,
                 'google': <g viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" stroke="none"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" stroke="none"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" stroke="none"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" stroke="none"/></g>,
-                'alert-triangle': <g><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></g>
+                'alert-triangle': <g><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></g>,
+                'play': <g><polygon points="5 3 19 12 5 21 5 3"/></g>
             };
             
             if (name === 'google') {
@@ -225,7 +227,6 @@
             },
             getLeaderboard: async (gameType, currentDayIndex) => {
                 try {
-                    // Diperbaiki: Menghapus orderBy('time', 'asc') karena membutuhkan Composite Index manual di Firebase Console
                     const snapshot = await db.collection('corpquest_leaderboard').doc(`${gameType}_day${currentDayIndex}`).collection('scores').orderBy('score', 'desc').limit(10).get();
                     let scores = [];
                     snapshot.forEach(doc => {
@@ -233,7 +234,6 @@
                         scores.push({ id: doc.id, name: data.name, score: data.score, time: data.time, isMe: auth.currentUser && doc.id === auth.currentUser.uid });
                     });
                     
-                    // Urutkan waktu secara manual di JavaScript jika kebetulan skornya seri
                     scores.sort((a, b) => {
                         if (b.score === a.score) return a.time - b.time;
                         return b.score - a.score;
@@ -253,10 +253,7 @@
             return Math.floor(score);
         };
 
-        // --- PROCEDURAL GENERATOR BANKS ---
-        const NAMES = ['Alex', 'Jordan', 'Taylor', 'Sam', 'Casey', 'Morgan', 'Riley', 'Jamie', 'Dakota', 'Quinn', 'Avery', 'Parker', 'Drew', 'Reese', 'Blake'];
-        
-        // Massive expansion for procedural categories (Synergy Square combinations = thousands of unique days)
+        // --- PROCEDURAL GENERATOR BANKS (Massively Expanded) ---
         const SYNERGY_CATEGORIES_ALL = [
             { title: "MEETING TYPES", items: ["STANDUP", "ALL HANDS", "1ON1", "TOWN HALL"] },
             { title: "DEPARTMENTS", items: ["SALES", "MARKETING", "FINANCE", "LEGAL"] },
@@ -272,15 +269,10 @@
             { title: "IT ISSUES", items: ["NETWORK", "HARDWARE", "PASSWORD", "SOFTWARE"] },
             { title: "CLOUD PROVIDERS", items: ["AWS", "AZURE", "GCP", "ORACLE"] },
             { title: "BENEFITS", items: ["HEALTH", "DENTAL", "VISION", "WELLNESS"] },
-            { title: "DOC FORMATS", items: ["PDF", "DOCX", "XLSX", "PPTX"] }
-        ];
-
-        const TALENT_DEPARTMENTS = [
-            { roles: ["UI/UX Intern", "Backend Dev", "IT Support", "Data Analyst"] },
-            { roles: ["Scrum Master", "Product Owner", "QA Tester", "DevOps Engineer"] },
-            { roles: ["Marketing Lead", "Copywriter", "SEO Specialist", "Social Media"] },
-            { roles: ["CFO", "Controller", "Tax Specialist", "Payroll Admin"] },
-            { roles: ["Legal Counsel", "Compliance", "Contract Mgr", "Paralegal"] }
+            { title: "DOC FORMATS", items: ["PDF", "DOCX", "XLSX", "PPTX"] },
+            { title: "PROJECT MGMT", items: ["ASANA", "JIRA", "TRELLO", "MONDAY"] },
+            { title: "HR TERMS", items: ["ONBOARD", "CHURN", "RETENTION", "CULTURE"] },
+            { title: "BUDGETING", items: ["OPEX", "CAPEX", "FORECAST", "ACTUALS"] }
         ];
 
         const JARGON_BANK = [
@@ -293,81 +285,141 @@
             { word: 'ALIGN', clue: "To get everyone on the same page and in agreement.", trivia: "Surged in corporate popularity in the 2010s to replace the harsher 'comply'." },
             { word: 'SYNER', clue: "Short for Synergy; combined action creating a greater effect.", trivia: "Became a massively overused buzzword in the late 1990s." },
             { word: 'ONSET', clue: "The beginning or start of a new project.", trivia: "A clear onset plan reduces project failure rates by 30%." },
-            { word: 'BONUS', clue: "Extra compensation above standard salary.", trivia: "The word literally means 'good' in Latin." }
+            { word: 'BONUS', clue: "Extra compensation above standard salary.", trivia: "The word literally means 'good' in Latin." },
+            { word: 'CACHE', clue: "A hidden storage of data or funds.", trivia: "In tech, caching saves bandwidth; in finance, it saves businesses during downturns." },
+            { word: 'QUOTA', clue: "A fixed share of something that a person or group is bound to contribute.", trivia: "Sales quotas originated during the industrial revolution to standardize output." }
         ];
 
         const PROCESS_BANK = [
-            { title: "Standard Offboarding", desc: "Arrange chronological order of resignation.", steps: ["Receive Formal Resignation", "Notify IT & Security", "Conduct Exit Interview", "Process Final Pay", "Deactivate Badges"] },
-            { title: "Discipline Escalation", desc: "Order the stages of progressive discipline.", steps: ["Verbal Warning", "Written Warning", "Performance Improvement Plan", "Final Warning", "Termination"] },
-            { title: "Expense Reimbursement", desc: "Order the steps to process an employee expense.", steps: ["Employee Incurs Expense", "Submit Receipts to System", "Manager Approval", "Finance Audit", "Funds Deposited to Account"] },
-            { title: "Software Release", desc: "Order the steps of a typical SDLC deployment.", steps: ["Write Code", "Code Review (PR)", "QA Testing", "Deploy to Staging", "Push to Production"] },
-            { title: "Recruitment Pipeline", desc: "Order the hiring process.", steps: ["Post Job Description", "Screen Resumes", "Initial HR Call", "Technical Interview", "Extend Offer"] }
+            { title: "Standard Offboarding", desc: "S.O.P Pengunduran Diri Karyawan", steps: ["Receive Formal Resignation", "Notify IT & Security", "Conduct Exit Interview", "Process Final Pay", "Deactivate Badges"], trivia: "A structured offboarding process reduces the risk of data breaches from former employees by 70%." },
+            { title: "Discipline Escalation", desc: "Tahapan Pendisiplinan Progresif Karyawan", steps: ["Verbal Warning", "Written Warning", "Performance Improvement Plan", "Final Warning", "Termination"], trivia: "Progressive discipline policies protect companies from wrongful termination lawsuits by establishing a documented trail of intervention." },
+            { title: "Expense Reimbursement", desc: "Proses Klaim Biaya Operasional", steps: ["Employee Incurs Expense", "Submit Receipts to System", "Manager Approval", "Finance Audit", "Funds Deposited to Account"], trivia: "Expense fraud costs U.S. businesses over $2.8 billion per year, making structured approvals vital." },
+            { title: "Software Release", desc: "Tahapan Rilis Software Development (SDLC)", steps: ["Write Code", "Code Review (PR)", "QA Testing", "Deploy to Staging", "Push to Production"], trivia: "Implementing a strict QA stage before staging deployment reduces critical bugs in production by 80%." },
+            { title: "Recruitment Pipeline", desc: "Urutan Proses Perekrutan Kandidat Baru", steps: ["Post Job Description", "Screen Resumes", "Initial HR Call", "Technical Interview", "Extend Offer"], trivia: "The average corporate job opening attracts 250 resumes, making initial screening the most time-consuming step." },
+            { title: "Annual Review", desc: "Tahapan Evaluasi Performa Tahunan", steps: ["Self Evaluation", "Peer 360 Feedback", "Manager Assessment", "Calibration Meeting", "1-on-1 Delivery"], trivia: "Companies with regular feedback turnover rates are 14.9% lower than for employees who receive no feedback." }
         ];
 
         const CROSSWORD_BANK = [
-            { target: "TIMEIDEAMEETEATS", across: [{ num: 1, clue: "Clock concept" }, { num: 5, clue: "Brainstorm result" }, { num: 6, clue: "Gather in a conference room" }, { num: 7, clue: "Lunches at the desk" }], down: [{ num: 1, clue: "Timesheet entry" }, { num: 2, clue: "'I have an ___!'" }, { num: 3, clue: "Calendar invite action" }, { num: 4, clue: "Consumes the catering" }] },
-            { target: "BOSSONTOSTEPSOPS", across: [{ num: 1, clue: "The Manager" }, { num: 5, clue: "Aware of the situation" }, { num: 6, clue: "One rung on a career ladder" }, { num: 7, clue: "Concessions to appease someone" }], down: [{ num: 1, clue: "The Manager" }, { num: 2, clue: "Aware of the situation" }, { num: 3, clue: "One rung on a career ladder" }, { num: 4, clue: "Concessions to appease someone" }] },
-            { target: "WORKOBOEROUTKETO", across: [{ num: 1, clue: "The 9-to-5 activity" }, { num: 5, clue: "Woodwind instrument" }, { num: 6, clue: "Defeat decisively" }, { num: 7, clue: "Low-carb diet popular in tech" }], down: [{ num: 1, clue: "The 9-to-5 activity" }, { num: 2, clue: "Woodwind instrument" }, { num: 3, clue: "Defeat decisively" }, { num: 4, clue: "Low-carb diet popular in tech" }] }
+            { 
+                target: "TIMEIDEAMEETEATS", 
+                across: [{ num: 1, idx: 0, clue: "Clock concept" }, { num: 5, idx: 4, clue: "Brainstorm result" }, { num: 6, idx: 8, clue: "Gather in a conference room" }, { num: 7, idx: 12, clue: "Lunches at the desk" }], 
+                down: [{ num: 1, idx: 0, clue: "Timesheet entry" }, { num: 2, idx: 1, clue: "'I have an ___!'" }, { num: 3, idx: 2, clue: "Calendar invite action" }, { num: 4, idx: 3, clue: "Consumes the catering" }],
+                trivia: "Crossword puzzles were first published in 1913 and quickly became a staple of morning corporate commutes."
+            },
+            { 
+                target: "PLANLINEANTSNEST", 
+                across: [{ num: 1, idx: 0, clue: "Project roadmap" }, { num: 5, idx: 4, clue: "Draw a ___ in the sand" }, { num: 6, idx: 8, clue: "Picnic crashers" }, { num: 7, idx: 12, clue: "Bird's home" }], 
+                down: [{ num: 1, idx: 0, clue: "Project roadmap" }, { num: 2, idx: 1, clue: "Draw a ___ in the sand" }, { num: 3, idx: 2, clue: "Picnic crashers" }, { num: 4, idx: 3, clue: "Bird's home" }],
+                trivia: "A well-defined project plan increases the success rate of corporate initiatives by 2.5x."
+            },
+            { 
+                target: "COSTOVERSEMITRIM", 
+                across: [{ num: 1, idx: 0, clue: "Project expense" }, { num: 5, idx: 4, clue: "Finished; done" }, { num: 6, idx: 8, clue: "Half (prefix)" }, { num: 7, idx: 12, clue: "Cut back, as a budget" }], 
+                down: [{ num: 1, idx: 0, clue: "Project expense" }, { num: 2, idx: 1, clue: "Finished; done" }, { num: 3, idx: 2, clue: "Half (prefix)" }, { num: 4, idx: 3, clue: "Cut back, as a budget" }],
+                trivia: "Cost overruns affect approximately 85% of all mega-projects globally."
+            },
+            { 
+                target: "LEADEDGEAGESDESK", 
+                across: [{ num: 1, idx: 0, clue: "Head up a project" }, { num: 5, idx: 4, clue: "Competitive advantage" }, { num: 6, idx: 8, clue: "A very long time" }, { num: 7, idx: 12, clue: "Where your monitor sits" }], 
+                down: [{ num: 1, idx: 0, clue: "Head up a project" }, { num: 2, idx: 1, clue: "Competitive advantage" }, { num: 3, idx: 2, clue: "A very long time" }, { num: 4, idx: 3, clue: "Where your monitor sits" }],
+                trivia: "Standing desks were adopted in offices largely due to studies citing 'sitting is the new smoking'."
+            },
+            { 
+                target: "FILEIRONLOADENDS", 
+                across: [{ num: 1, idx: 0, clue: "Manilla folder" }, { num: 5, idx: 4, clue: "De-wrinkle a shirt" }, { num: 6, idx: 8, clue: "Amount of work" }, { num: 7, idx: 12, clue: "Wraps up the meeting" }], 
+                down: [{ num: 1, idx: 0, clue: "Manilla folder" }, { num: 2, idx: 1, clue: "De-wrinkle a shirt" }, { num: 3, idx: 2, clue: "Amount of work" }, { num: 4, idx: 3, clue: "Wraps up the meeting" }],
+                trivia: "Digital file management saves the average employee roughly 2 hours a week compared to paper filing."
+            }
         ];
 
-        const getPuzzleDataForIndex = (dayIndex) => {
-            if (dayIndex < 0) return null;
-            const rng = seededRNG(dayIndex + 2000); 
-            
-            const GAME_TYPES = ['JARGON_BUSTER', 'TALENT_GRID', 'SYNERGY_SQUARE', 'PROCESS_FLOW', 'MINI_CROSSWORD'];
-            const gameType = GAME_TYPES[dayIndex % 5];
+        const WORDFLOWER_BANK = [
+            { pangram: "COMPANY", center: "P", letters: ["C", "O", "M", "A", "N", "Y", "P"], validWords: ["COMPANY", "CAMP", "COMP", "PONY", "COPY", "CANOPY", "CAPO", "COOP", "POMP"], trivia: "The word 'Company' comes from Latin 'com' (together) and 'panis' (bread) — literally, people who break bread together." },
+            { pangram: "PROBLEM", center: "O", letters: ["P", "R", "B", "L", "E", "M", "O"], validWords: ["PROBLEM", "PROBE", "MORE", "ROLE", "POLE", "BOOM", "MOPE", "ROPE", "BORE", "LOBE", "ROOM", "MOOR", "POOL", "LOOP", "POEM"], trivia: "Employees spend an average of 2.8 hours a week dealing with workplace problems and conflicts." },
+            { pangram: "NETWORK", center: "O", letters: ["N", "E", "T", "W", "R", "K", "O"], validWords: ["NETWORK", "WORK", "WOKE", "TORE", "TONE", "ROOT", "NOTE", "ROTE", "TORN", "KNOT", "WORN", "TOWN", "KNOW"], trivia: "85% of all open positions are filled through networking, not traditional job boards." },
+            { pangram: "BUDGETS", center: "U", letters: ["B", "D", "G", "E", "T", "S", "U"], validWords: ["BUDGETS", "BUDGET", "GUEST", "BUGS", "TUBE", "DUST", "STUB", "STUD", "SUED", "SUET", "TUBS", "GUTS"], trivia: "Corporate budget planning originally started in the 1920s as a tool for managing industrial manufacturing costs." },
+            { pangram: "PROJECT", center: "O", letters: ["P", "R", "J", "E", "C", "T", "O"], validWords: ["PROJECT", "PORT", "PORE", "POET", "CROP", "COPE", "CORE", "ROPE"], trivia: "Project management as a modern discipline began in the 1950s." }
+        ];
+
+        // ENGINE INTI (Tanpa Talent Grid, Sesuai Permintaan)
+        const GAME_TYPES = ['MINI_CROSSWORD', 'JARGON_BUSTER', 'SYNERGY_SQUARE', 'PROCESS_FLOW', 'WORDFLOWER'];
+
+        const generatePuzzleData = (gameType, seed) => {
+            const rng = seededRNG(seed); 
             let puzzleData = {};
 
-            if (gameType === 'TALENT_GRID') {
-                // Procedural Talent Grid Generation
-                const dept = pickRandom(TALENT_DEPARTMENTS, rng);
-                const candidates = shuffleArray([...NAMES], rng).slice(0, 5); 
-                
-                // Logic Skeletons to inject names/roles
-                const skeletons = [
-                    (r, n) => [`The ${r[0]} role must be filled by ${n[0]}.`, `${n[1]} has the perfect background for ${r[1]}.`, `${n[4]} (Red Flag) demanded a salary triple our budget.`, `${n[2]} loves the tasks associated with ${r[2]}.`, `${n[3]} excels at ${r[3]}.`],
-                    (r, n) => [`${n[2]} is our new ${r[2]}.`, `The ${r[3]} belongs to ${n[3]}, who has 10 years experience.`, `${n[0]} is a certified expert and will be the ${r[0]}.`, `${n[4]} (Red Flag) refuses to use our project management software.`, `${n[1]} will take on the ${r[1]} position.`]
-                ];
-                const cluesGen = pickRandom(skeletons, rng);
+            if (gameType === 'JARGON_BUSTER') {
+                puzzleData = pickRandom(JARGON_BANK, rng);
+            }
+            else if (gameType === 'PROCESS_FLOW') {
+                const base = pickRandom(PROCESS_BANK, rng);
+                // Assign index asli ke text, lalu acak urutannya agar user tidak bisa menebak
+                const orderedSteps = base.steps.map((text, i) => ({ originalIndex: i, text }));
+                const shuffledSteps = shuffleArray(orderedSteps, rng);
+                // Gunakan label A, B, C, D murni untuk UI display, sedangka 'solution' adalah array label A/B/C mana yang posisinya benar.
+                const displaySteps = shuffledSteps.map((step, i) => ({ 
+                    id: String.fromCharCode(65 + i), 
+                    text: step.text,
+                    originalIndex: step.originalIndex 
+                }));
+                // Solusi adalah urutan Abjad (A, B, dll) yang benar berdasarkan originalIndex-nya
+                const solution = [...displaySteps].sort((a, b) => a.originalIndex - b.originalIndex).map(s => s.id);
 
                 puzzleData = {
-                    roles: dept.roles, candidates,
-                    solution: { [dept.roles[0]]: candidates[0], [dept.roles[1]]: candidates[1], [dept.roles[2]]: candidates[2], [dept.roles[3]]: candidates[3] },
-                    clues: cluesGen(dept.roles, candidates),
-                    trivia: "A bad hire can cost a company up to 30% of the employee's first-year earnings in lost productivity."
-                };
-            } 
-            else if (gameType === 'JARGON_BUSTER') puzzleData = JARGON_BANK[dayIndex % JARGON_BANK.length];
-            else if (gameType === 'PROCESS_FLOW') {
-                const base = PROCESS_BANK[dayIndex % PROCESS_BANK.length];
-                puzzleData = {
-                    title: base.title, desc: base.desc,
-                    steps: base.steps.map((text, i) => ({ id: String.fromCharCode(65 + i), text })),
-                    solution: base.steps.map((_, i) => String.fromCharCode(65 + i))
+                    title: base.title, desc: base.desc, trivia: base.trivia,
+                    steps: displaySteps, 
+                    solution: solution
                 };
             }
             else if (gameType === 'SYNERGY_SQUARE') {
-                // Procedural Synergy Square
-                const colors = ["bg-amber-300 text-amber-900", "bg-emerald-300 text-emerald-900", "bg-blue-300 text-blue-900", "bg-fuchsia-300 text-fuchsia-900"];
+                // NYT Colors for Difficulty
+                const colors = [
+                    "bg-[#f9df6d] text-slate-900 border-[#d4bd54]", // Yellow
+                    "bg-[#a0c35a] text-white border-[#87a54a]", // Green
+                    "bg-[#b0c4ef] text-slate-900 border-[#93a7cf]", // Blue
+                    "bg-[#ba81c5] text-white border-[#9c6a9c]"  // Purple
+                ];
                 const selectedCats = shuffleArray([...SYNERGY_CATEGORIES_ALL], rng).slice(0, 4);
                 
                 puzzleData = {
                     categories: selectedCats.map((cat, i) => {
-                        const [bg, text] = colors[i].split(" ");
-                        return { title: cat.title, items: cat.items, bg, text };
-                    })
+                        return { title: cat.title, items: cat.items, bgClass: colors[i] };
+                    }),
+                    trivia: "Finding synergy across corporate divisions can increase overall efficiency by up to 20%."
                 };
             }
             else if (gameType === 'MINI_CROSSWORD') {
-                puzzleData = CROSSWORD_BANK[dayIndex % CROSSWORD_BANK.length];
+                puzzleData = pickRandom(CROSSWORD_BANK, rng);
             }
+            else if (gameType === 'WORDFLOWER') {
+                puzzleData = pickRandom(WORDFLOWER_BANK, rng);
+                // Extract center letter, and shuffle the other 6 letters
+                const outerLetters = puzzleData.letters.filter(l => l !== puzzleData.center);
+                puzzleData.outerLetters = shuffleArray(outerLetters, rng);
+            }
+            return puzzleData;
+        };
+
+        const getPuzzleDataForIndex = (dayIndex) => {
+            if (dayIndex < 0) return null;
+            const gameType = GAME_TYPES[dayIndex % GAME_TYPES.length];
+            const rngSeed = dayIndex + 2000; 
+            
+            const puzzleData = generatePuzzleData(gameType, rngSeed);
+
+            let maxAttempts = 5;
+            if (gameType === 'JARGON_BUSTER') maxAttempts = 6;
+            if (gameType === 'PROCESS_FLOW') maxAttempts = 4;
+            if (gameType === 'SYNERGY_SQUARE') maxAttempts = 4; 
+            if (gameType === 'MINI_CROSSWORD') maxAttempts = 10;
+            if (gameType === 'WORDFLOWER') maxAttempts = 10; // Extra attempts for Wordflower spelling
             
             const targetDate = new Date(EPOCH_DATE);
             targetDate.setDate(targetDate.getDate() + dayIndex);
 
             return { 
-                dayIndex, gameType, puzzleData, 
-                dateStr: targetDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) 
+                dayIndex, gameType, puzzleData, maxAttempts,
+                dateStr: targetDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+                rngSeed
             };
         };
 
@@ -380,25 +432,26 @@
             const diffTime = Math.abs(localNow - localEpoch);
             const dayIndex = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             
-            const { gameType, puzzleData } = getPuzzleDataForIndex(dayIndex);
-            
-            let maxAttempts = 5;
-            if (gameType === 'JARGON_BUSTER') maxAttempts = 6;
-            if (gameType === 'PROCESS_FLOW') maxAttempts = 4;
-            if (gameType === 'SYNERGY_SQUARE') maxAttempts = 4; 
-            if (gameType === 'MINI_CROSSWORD') maxAttempts = 5;
+            const puzzleInstance = getPuzzleDataForIndex(dayIndex);
 
-            return { dayIndex, gameType, puzzleData, maxAttempts, todayStr: localDateStr, rngSeed: dayIndex + 2000 };
+            return { 
+                ...puzzleInstance,
+                todayStr: localDateStr, 
+                isTestMode: false 
+            };
         };
 
         const evaluateAttempt = (guessArray, targetArray) => {
             let result = Array(targetArray.length).fill('absent');
             let targetCopy = [...targetArray];
+            
+            // Phase 1: Exact matches
             guessArray.forEach((val, i) => {
-                if (val === targetCopy[i]) { result[i] = 'correct'; targetCopy[i] = null; }
+                if (val === targetCopy[i] && val !== '') { result[i] = 'correct'; targetCopy[i] = null; }
             });
+            // Phase 2: Partial matches
             guessArray.forEach((val, i) => {
-                if (result[i] !== 'correct' && targetCopy.includes(val)) {
+                if (result[i] !== 'correct' && targetCopy.includes(val) && val !== '') {
                     result[i] = 'present'; targetCopy[targetCopy.indexOf(val)] = null;
                 }
             });
@@ -423,118 +476,6 @@
                             style={{ left: `${Math.random() * 100}%`, backgroundColor: colors[i % colors.length], animationDelay: `${Math.random() * 2}s`, animationDuration: `${2 + Math.random() * 2}s` }}
                         />
                     ))}
-                </div>
-            );
-        };
-
-        const GridGame = ({ puzzle, maxAttempts, gameState, setGameState, onGameOver }) => {
-            const [selectedCandidate, setSelectedCandidate] = useState(null);
-            const [isShaking, setIsShaking] = useState(false);
-            const { history, currentGuess, status } = gameState;
-
-            const handleSelect = (c) => status === 'playing' && setSelectedCandidate(c === selectedCandidate ? null : c);
-            const handleAssign = (role) => {
-                if (status !== 'playing') return;
-                if (selectedCandidate) {
-                    const newGuess = { ...currentGuess };
-                    Object.keys(newGuess).forEach(k => { if (newGuess[k] === selectedCandidate) newGuess[k] = ''; });
-                    newGuess[role] = selectedCandidate;
-                    setGameState(prev => ({ ...prev, currentGuess: newGuess }));
-                    setSelectedCandidate(null);
-                } else if (currentGuess[role] !== '') {
-                    setGameState(prev => ({ ...prev, currentGuess: { ...prev.currentGuess, [role]: '' } }));
-                }
-            };
-
-            const handleSubmit = () => {
-                if (Object.values(currentGuess).some(v => v === '')) { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); return; }
-                const guessArray = puzzle.roles.map(r => currentGuess[r]);
-                const evaluation = guessArray.map(guessed => {
-                    const index = puzzle.roles.findIndex(r => currentGuess[r] === guessed);
-                    if (puzzle.solution[puzzle.roles[index]] === guessed) return 'correct';
-                    if (Object.values(puzzle.solution).includes(guessed)) return 'present';
-                    return 'absent'; 
-                });
-
-                const newHistory = [...history, { guess: { ...currentGuess }, evaluation }];
-                let newStatus = 'playing';
-                if (evaluation.every(e => e === 'correct')) newStatus = 'won';
-                else if (newHistory.length >= maxAttempts) newStatus = 'lost';
-
-                const nextGuess = {};
-                if (newStatus === 'playing') puzzle.roles.forEach((r, i) => nextGuess[r] = evaluation[i] === 'correct' ? currentGuess[r] : '');
-
-                setGameState({ history: newHistory, currentGuess: nextGuess, status: newStatus });
-                if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
-            };
-
-            const assigned = Object.values(currentGuess).filter(c => c !== '');
-
-            return (
-                <div className="flex flex-col h-full animate-fade-in">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4 max-h-48 overflow-y-auto hide-scrollbar relative">
-                        <div className="sticky top-0 bg-white pb-1 mb-2 border-b border-slate-100 z-10">
-                            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Dossier / Clues</h2>
-                        </div>
-                        <ul className="text-sm text-slate-700 font-medium space-y-1.5">
-                            {puzzle.clues.map((c, i) => <li key={i} className="flex gap-2"><span className="text-indigo-500 shrink-0">•</span><span>{c}</span></li>)}
-                        </ul>
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center gap-2 mb-4 max-w-md mx-auto w-full">
-                        {[...Array(maxAttempts)].map((_, rIdx) => {
-                            const attempt = history[rIdx];
-                            const isActive = rIdx === history.length && status === 'playing';
-                            return (
-                                <div key={rIdx} className={`flex gap-2 ${isActive && isShaking ? 'animate-shake' : ''}`}>
-                                    {puzzle.roles.map((role, cIdx) => {
-                                        const state = attempt ? attempt.evaluation[cIdx] : (isActive && currentGuess[role] ? 'tbd' : 'empty');
-                                        const text = attempt ? attempt.guess[role] : (isActive ? currentGuess[role] : '');
-                                        return (
-                                            <div key={cIdx} className={`flex-1 h-12 flex items-center justify-center rounded text-sm font-bold border-2 transition-all duration-500
-                                                ${state === 'empty' ? 'bg-white border-slate-200 text-slate-400' : ''}
-                                                ${state === 'tbd' ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : ''}
-                                                ${state === 'correct' ? 'bg-correct animate-flip' : ''}
-                                                ${state === 'present' ? 'bg-present animate-flip' : ''}
-                                                ${state === 'absent' ? 'bg-absent animate-flip' : ''}
-                                            `} style={{ animationDelay: attempt ? `${cIdx * 0.15}s` : '0s' }}>{text}</div>
-                                        )
-                                    })}
-                                </div>
-                            )
-                        })}
-                    </div>
-                    {status === 'playing' && (
-                        <div className="bg-white p-4 rounded-2xl shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.1)] border border-slate-200 mt-auto">
-                            <p className="text-center text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">1. Select Name</p>
-                            <div className="flex flex-wrap justify-center gap-2 mb-4">
-                                {puzzle.candidates.map(c => (
-                                    <button key={c} onClick={() => handleSelect(c)} disabled={assigned.includes(c) && selectedCandidate !== c}
-                                        className={`px-3 py-1.5 rounded-lg text-sm font-bold border-2 transition-all shadow-sm ${
-                                            assigned.includes(c) && selectedCandidate !== c ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed' :
-                                            selectedCandidate === c ? 'bg-indigo-600 text-white border-indigo-700 scale-105 shadow-md' : 'bg-white text-slate-700 border-slate-300 hover:border-indigo-400'
-                                        }`}>{c}</button>
-                                ))}
-                            </div>
-                            <p className="text-center text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">2. Tap Role to Assign</p>
-                            <div className="grid grid-cols-2 gap-2 mb-4">
-                                {puzzle.roles.map(r => {
-                                    const isLocked = history.length > 0 && history[history.length-1].evaluation[puzzle.roles.indexOf(r)] === 'correct';
-                                    return (
-                                        <button key={r} onClick={() => !isLocked && handleAssign(r)} disabled={isLocked}
-                                            className={`p-2 rounded-xl border-2 flex flex-col items-center justify-center h-16 transition-all ${
-                                                isLocked ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
-                                                currentGuess[r] ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-inner' :
-                                                selectedCandidate ? 'border-dashed border-indigo-400 bg-indigo-50/50 animate-pulse' : 'border-dashed border-slate-300 bg-slate-50'
-                                            }`}>
-                                            <span className="text-[10px] uppercase font-bold opacity-70 mb-1 leading-tight text-center">{r}</span>
-                                            <span className="text-sm font-bold">{currentGuess[r]}</span>
-                                        </button>
-                                    )
-                                })}
-                            </div>
-                            <button onClick={handleSubmit} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold active:scale-95 transition-transform shadow-lg">Submit ({history.length}/{maxAttempts})</button>
-                        </div>
-                    )}
                 </div>
             );
         };
@@ -671,7 +612,9 @@
                         {history.map((attempt, rIdx) => (
                             <div key={rIdx} className="flex gap-1">
                                 {attempt.evaluation.map((ev, cIdx) => (
-                                    <div key={cIdx} className={`w-8 h-8 rounded border flex items-center justify-center font-bold text-xs text-white ${ev === 'correct' ? 'bg-correct animate-flip' : ev === 'present' ? 'bg-present animate-flip' : 'bg-absent animate-flip'}`} style={{ animationDelay: `${cIdx * 0.15}s` }}>{attempt.guess[cIdx]}</div>
+                                    <div key={cIdx} className={`w-8 h-8 rounded border flex items-center justify-center font-bold text-xs text-white ${ev === 'correct' ? 'bg-correct animate-flip' : ev === 'present' ? 'bg-present animate-flip' : 'bg-absent animate-flip'}`} style={{ animationDelay: `${cIdx * 0.15}s` }}>
+                                        {cIdx + 1}
+                                    </div>
                                 ))}
                             </div>
                         ))}
@@ -689,11 +632,11 @@
                                 {guessArr.length === 0 && <p className="text-slate-400 text-sm text-center py-6">Tap steps below to build sequence</p>}
                             </div>
                             <div className="grid grid-cols-1 gap-2">
-                                {puzzle.steps.map(step => {
+                                {puzzle.steps.map((step, idx) => {
                                     if (guessArr.includes(step.id)) return null;
                                     return (
                                         <button key={step.id} onClick={() => handleToggleStep(step.id)} className="p-3 bg-white border border-slate-300 hover:border-indigo-400 rounded shadow-sm text-sm font-medium text-left flex items-center gap-3 active:scale-[0.98]">
-                                            <span className="w-6 h-6 rounded bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">{step.id}</span>
+                                            <span className="w-6 h-6 rounded bg-slate-100 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">{String.fromCharCode(65 + idx)}</span>
                                             {step.text}
                                         </button>
                                     )
@@ -762,9 +705,9 @@
                     
                     <div className="flex flex-col gap-2 mb-4">
                         {solved.map((cat, idx) => (
-                            <div key={idx} className={`${cat.bg} rounded-xl p-4 text-center animate-pop shadow-sm`}>
-                                <div className={`font-bold text-sm mb-1 ${cat.text}`}>{cat.title}</div>
-                                <div className={`text-xs ${cat.text}`}>{cat.items.join(", ")}</div>
+                            <div key={idx} className={`${cat.bgClass} border-2 rounded-xl p-4 text-center animate-pop shadow-sm`}>
+                                <div className={`font-bold text-sm mb-1`}>{cat.title}</div>
+                                <div className={`text-xs`}>{cat.items.join(", ")}</div>
                             </div>
                         ))}
                     </div>
@@ -813,6 +756,140 @@
             );
         };
 
+        const WordflowerGame = ({ puzzle, maxAttempts, gameState, setGameState, onGameOver, triggerToast }) => {
+            const { history, status } = gameState; // history tracks found words & invalid attempts
+            const [currentGuess, setCurrentGuess] = useState("");
+            const [isShaking, setIsShaking] = useState(false);
+            
+            const foundWords = history.filter(h => h.status !== 'invalid').map(h => h.guess);
+            const mistakes = history.filter(h => h.status === 'invalid').length;
+
+            const onKeyPress = useCallback((key) => {
+                if (status !== 'playing') return;
+                
+                if (key === 'ENTER') {
+                    if (currentGuess.length < 4) {
+                        triggerToast("Kata minimal 4 huruf.", true);
+                        setIsShaking(true); setTimeout(() => setIsShaking(false), 500);
+                        return;
+                    }
+                    if (!currentGuess.includes(puzzle.center)) {
+                        triggerToast("Harus mengandung huruf tengah.", true);
+                        setIsShaking(true); setTimeout(() => setIsShaking(false), 500);
+                        return;
+                    }
+                    if (foundWords.includes(currentGuess)) {
+                        triggerToast("Sudah ditebak!", true);
+                        setIsShaking(true); setTimeout(() => setIsShaking(false), 500);
+                        setCurrentGuess("");
+                        return;
+                    }
+
+                    const isValid = puzzle.validWords.includes(currentGuess);
+                    const isPangram = currentGuess === puzzle.pangram;
+                    
+                    const newEntry = { guess: currentGuess, status: isPangram ? 'pangram' : (isValid ? 'valid' : 'invalid') };
+                    const newHistory = [...history, newEntry];
+                    const newMistakes = newHistory.filter(h => h.status === 'invalid').length;
+
+                    let newStatus = 'playing';
+                    if (isPangram) newStatus = 'won';
+                    else if (newMistakes >= maxAttempts) newStatus = 'lost';
+
+                    setGameState(prev => ({ ...prev, history: newHistory, status: newStatus }));
+                    setCurrentGuess("");
+
+                    if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
+                    else if (isValid) triggerToast("Kerja bagus!", false);
+                    else { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); }
+
+                } else if (key === 'BACKSPACE') {
+                    setCurrentGuess(prev => prev.slice(0, -1));
+                } else if (puzzle.letters.includes(key)) {
+                    setCurrentGuess(prev => prev + key);
+                }
+            }, [currentGuess, history, status, puzzle, foundWords, maxAttempts, setGameState, onGameOver, triggerToast]);
+
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (status !== 'playing') return;
+                    if (e.ctrlKey || e.metaKey || e.altKey) return;
+                    
+                    const key = e.key.toUpperCase();
+                    if (key === 'ENTER') onKeyPress('ENTER');
+                    else if (key === 'BACKSPACE') onKeyPress('BACKSPACE');
+                    else if (puzzle.letters.includes(key)) onKeyPress(key);
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [onKeyPress, status, puzzle]);
+
+            const petalPositions = [
+                "top-[5%] left-1/2 -translate-x-1/2", 
+                "top-[25%] right-[10%]", 
+                "bottom-[25%] right-[10%]", 
+                "bottom-[5%] left-1/2 -translate-x-1/2", 
+                "bottom-[25%] left-[10%]", 
+                "top-[25%] left-[10%]"
+            ];
+
+            const sortedValidHistory = history.filter(h => h.status !== 'invalid').sort((a,b) => b.guess.length - a.guess.length);
+
+            return (
+                <div className="flex flex-col h-full animate-fade-in">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 text-center">
+                        <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Target</span>
+                        <p className="text-slate-800 font-semibold mt-1 text-sm">Temukan PANGRAM korporat (7 huruf).</p>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full relative mb-4">
+                        <div className={`h-12 border-b-2 flex items-center justify-center text-3xl font-bold tracking-widest uppercase text-slate-800 mb-6 ${isShaking ? 'border-rose-400 text-rose-500 animate-shake' : 'border-slate-200'}`}>
+                            {currentGuess || <span className="text-slate-200">...</span>}
+                        </div>
+
+                        {status === 'playing' ? (
+                            <div className="relative w-64 h-64 mx-auto">
+                                <button onClick={() => onKeyPress(puzzle.center)} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-amber-300 text-amber-900 rounded-full flex items-center justify-center text-3xl font-extrabold shadow-md active:scale-95 transition-transform z-20">
+                                    {puzzle.center}
+                                </button>
+                                {puzzle.outerLetters.map((letter, idx) => (
+                                    <button key={idx} onClick={() => onKeyPress(letter)} className={`absolute ${petalPositions[idx]} w-16 h-16 bg-slate-200 text-slate-700 rounded-full flex items-center justify-center text-2xl font-bold shadow active:scale-95 transition-transform hover:bg-slate-300 z-10`}>
+                                        {letter}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center p-6 bg-emerald-50 rounded-2xl border border-emerald-100 animate-pop">
+                                <p className="text-sm font-bold text-emerald-600 uppercase mb-2">The Pangram Was</p>
+                                <p className="text-4xl font-black text-emerald-900 tracking-widest">{puzzle.pangram}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-auto max-w-lg mx-auto w-full">
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4 flex flex-col max-h-32">
+                            <div className="flex justify-between items-center mb-2 shrink-0 border-b border-slate-100 pb-2">
+                                <span className="text-xs font-bold text-slate-400 uppercase">Words Found ({sortedValidHistory.length})</span>
+                                <span className="text-xs font-bold text-rose-500 uppercase">Errors: {mistakes}/{maxAttempts}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5 overflow-y-auto hide-scrollbar flex-1 pt-1">
+                                {sortedValidHistory.map((h, i) => (
+                                    <span key={i} className={`px-2 py-1 text-[10px] font-bold rounded ${h.status === 'pangram' ? 'bg-amber-400 text-amber-900' : 'bg-slate-100 text-slate-600'}`}>{h.guess}</span>
+                                ))}
+                                {sortedValidHistory.length === 0 && <span className="text-xs text-slate-400 italic">No words found yet...</span>}
+                            </div>
+                        </div>
+                        {status === 'playing' && (
+                            <div className="flex gap-2">
+                                <button onClick={() => onKeyPress('BACKSPACE')} className="flex-1 py-4 bg-slate-200 text-slate-700 rounded-xl font-bold active:scale-95 transition-transform flex justify-center items-center"><Icon name="delete" className="w-5 h-5" /></button>
+                                <button onClick={() => onKeyPress('ENTER')} className="flex-[2] py-4 bg-slate-900 text-white rounded-xl font-bold active:scale-95 transition-transform shadow-md">Enter</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
         const CrosswordGame = ({ puzzle, maxAttempts, gameState, setGameState, onGameOver }) => {
             const { target, across, down } = puzzle;
             const size = 4;
@@ -824,7 +901,9 @@
             const grid = Array.isArray(currentGuess) ? currentGuess : Array(16).fill('');
 
             const clueNumbers = {};
-            [...across, ...down].forEach(c => clueNumbers[c.idx] = c.num);
+            [...across, ...down].forEach(c => {
+                if (c.idx !== undefined) clueNumbers[c.idx] = c.num;
+            });
 
             const getActiveWordIndices = () => {
                 let indices = [];
@@ -846,46 +925,44 @@
                 else setActiveCell(idx);
             };
 
-            const onKeyDown = useCallback((e) => {
+            const onKeyPress = useCallback((key) => {
                 if (status !== 'playing') return;
-                if (e.ctrlKey || e.metaKey || e.altKey) return;
                 
-                const key = e.key.toUpperCase();
-                
-                if (/^[A-Z]$/.test(key) && key.length === 1) {
+                if (key === 'ENTER') {
+                    submitGrid();
+                } else if (key === 'BACKSPACE') {
+                    if (grid[activeCell] !== '') {
+                        const newGrid = [...grid];
+                        newGrid[activeCell] = '';
+                        setGameState(prev => ({...prev, currentGuess: newGrid}));
+                    } else {
+                        let prevCell = direction === 'across' ? activeCell - 1 : activeCell - size;
+                        if (direction === 'across' && activeCell % size !== 0) {
+                            const newGrid = [...grid];
+                            newGrid[prevCell] = '';
+                            setGameState(prev => ({...prev, currentGuess: newGrid}));
+                            setActiveCell(prevCell);
+                        } else if (direction === 'down' && activeCell - size >= 0) {
+                            const newGrid = [...grid];
+                            newGrid[prevCell] = '';
+                            setGameState(prev => ({...prev, currentGuess: newGrid}));
+                            setActiveCell(prevCell);
+                        }
+                    }
+                } else if (/^[A-Z]$/.test(key) && key.length === 1) {
                     const newGrid = [...grid];
                     newGrid[activeCell] = key;
                     setGameState(prev => ({...prev, currentGuess: newGrid}));
                     
                     if (direction === 'across' && (activeCell + 1) % size !== 0) setActiveCell(activeCell + 1);
                     else if (direction === 'down' && activeCell + size < size * size) setActiveCell(activeCell + size);
-                } 
-                else if (e.key === 'Backspace') {
-                    if (grid[activeCell] !== '') {
-                        const newGrid = [...grid];
-                        newGrid[activeCell] = '';
-                        setGameState(prev => ({...prev, currentGuess: newGrid}));
-                    } else {
-                        if (direction === 'across' && activeCell % size !== 0) setActiveCell(activeCell - 1);
-                        else if (direction === 'down' && activeCell - size >= 0) setActiveCell(activeCell - size);
-                    }
                 }
-                else if (e.key === 'ArrowRight' && (activeCell + 1) % size !== 0) setActiveCell(activeCell + 1);
-                else if (e.key === 'ArrowLeft' && activeCell % size !== 0) setActiveCell(activeCell - 1);
-                else if (e.key === 'ArrowDown' && activeCell + size < size * size) setActiveCell(activeCell + size);
-                else if (e.key === 'ArrowUp' && activeCell - size >= 0) setActiveCell(activeCell - size);
-                else if (e.key === 'Tab' || e.key === ' ') { e.preventDefault(); setDirection(prev => prev === 'across' ? 'down' : 'across'); }
             }, [activeCell, direction, grid, status, size, setGameState]);
 
-            useEffect(() => {
-                window.addEventListener('keydown', onKeyDown);
-                return () => window.removeEventListener('keydown', onKeyDown);
-            }, [onKeyDown]);
-
-            const handleSubmit = () => {
+            const submitGrid = useCallback(() => {
                 if (grid.includes('')) { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); return; }
                 
-                const evaluation = grid.map((char, i) => char === target[i] ? 'correct' : 'absent');
+                const evaluation = evaluateAttempt(grid, target.split(''));
                 const newHistory = [...history, { guess: [...grid], evaluation }];
                 
                 let newStatus = 'playing';
@@ -895,7 +972,25 @@
                 setGameState(prev => ({ ...prev, history: newHistory, status: newStatus }));
                 if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
                 else { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); }
-            };
+            }, [grid, target, history, maxAttempts, setGameState, onGameOver]);
+
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (status !== 'playing') return;
+                    if (e.ctrlKey || e.metaKey || e.altKey) return;
+                    
+                    if (e.key === 'Enter') { e.preventDefault(); onKeyPress('ENTER'); }
+                    else if (e.key === 'Backspace') { e.preventDefault(); onKeyPress('BACKSPACE'); }
+                    else if (/^[A-Za-z]$/.test(e.key) && e.key.length === 1) { e.preventDefault(); onKeyPress(e.key.toUpperCase()); }
+                    else if (e.key === 'ArrowRight' && (activeCell + 1) % size !== 0) setActiveCell(activeCell + 1);
+                    else if (e.key === 'ArrowLeft' && activeCell % size !== 0) setActiveCell(activeCell - 1);
+                    else if (e.key === 'ArrowDown' && activeCell + size < size * size) setActiveCell(activeCell + size);
+                    else if (e.key === 'ArrowUp' && activeCell - size >= 0) setActiveCell(activeCell - size);
+                    else if (e.key === 'Tab' || e.key === ' ') { e.preventDefault(); setDirection(prev => prev === 'across' ? 'down' : 'across'); }
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [activeCell, direction, onKeyPress, status, size]);
 
             const getActiveClue = () => {
                 const arr = direction === 'across' ? across : down;
@@ -904,19 +999,42 @@
                 return clueObj ? `${clueObj.num} ${direction.toUpperCase()}: ${clueObj.clue}` : '';
             };
 
-            const cellColors = Array(16).fill('bg-white');
+            const cellColors = Array(16).fill('bg-white text-slate-800 border-slate-200');
+            const keyColors = {};
+
             if (history.length > 0) {
-                const latestEval = history[history.length - 1].evaluation;
-                latestEval.forEach((ev, i) => { if (ev === 'absent') cellColors[i] = 'bg-rose-100 text-rose-700'; });
+                const latestAttempt = history[history.length - 1];
+                
+                latestAttempt.evaluation.forEach((ev, i) => { 
+                    if (grid[i] === latestAttempt.guess[i] && grid[i] !== '') {
+                        if (ev === 'correct') cellColors[i] = 'bg-emerald-500 text-white border-emerald-600';
+                        else if (ev === 'present') cellColors[i] = 'bg-amber-400 text-white border-amber-500';
+                        else if (ev === 'absent') cellColors[i] = 'bg-rose-500 text-white border-rose-600';
+                    }
+                });
+
+                history.forEach((attempt) => {
+                    attempt.guess.forEach((letter, i) => {
+                        const evalState = attempt.evaluation[i];
+                        if (evalState === 'correct') keyColors[letter] = 'bg-emerald-500 text-white';
+                        else if (evalState === 'present' && !keyColors[letter]?.includes('emerald')) keyColors[letter] = 'bg-amber-400 text-white';
+                        else if (evalState === 'absent' && !keyColors[letter]) keyColors[letter] = 'bg-rose-500 text-white border-rose-600 opacity-60';
+                    });
+                });
             }
+
+            const keys = [['Q','W','E','R','T','Y','U','I','O','P'], ['A','S','D','F','G','H','J','K','L'], ['Z','X','C','V','B','N','M','BACKSPACE']];
 
             return (
                 <div className="flex flex-col h-full animate-fade-in max-w-sm mx-auto w-full">
-                    <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-6 shadow-sm min-h-[80px] flex items-center justify-center transition-all duration-300">
-                        <p className="text-sm font-bold text-indigo-900 text-center animate-fade-in" key={getActiveClue()}>{getActiveClue()}</p>
+                    <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl mb-4 shadow-sm min-h-[60px] flex items-center justify-center transition-all duration-300 relative cursor-pointer" onClick={() => setDirection(prev => prev === 'across' ? 'down' : 'across')}>
+                        <div className="absolute top-1 left-2 text-[9px] font-bold text-indigo-400 uppercase tracking-widest">{direction}</div>
+                        <p className="text-sm font-bold text-indigo-900 text-center animate-fade-in leading-snug px-2" key={getActiveClue()}>
+                            {getActiveClue()}
+                        </p>
                     </div>
 
-                    <div className={`grid grid-cols-4 gap-1 mx-auto mb-8 bg-slate-800 p-1 rounded-lg ${isShaking ? 'animate-shake' : ''}`} style={{ width: 'fit-content' }}>
+                    <div className={`grid grid-cols-4 gap-1 mx-auto mb-4 bg-slate-800 p-1 rounded-lg ${isShaking ? 'animate-shake' : ''}`} style={{ width: 'fit-content' }}>
                         {grid.map((char, idx) => {
                             const isFocused = activeCell === idx && status === 'playing';
                             const isHighlighted = activeIndices.includes(idx) && status === 'playing';
@@ -926,23 +1044,48 @@
                                 <div 
                                     key={idx} 
                                     onClick={() => handleCellClick(idx)}
-                                    className={`relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-2xl font-bold uppercase cursor-pointer rounded-sm transition-colors duration-200
-                                        ${isCorrect ? 'bg-correct' : isFocused ? 'bg-amber-200' : isHighlighted ? 'bg-amber-50' : cellColors[idx]}
+                                    className={`relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-2xl font-bold uppercase cursor-pointer rounded-sm transition-colors duration-200 border-2
+                                        ${isCorrect ? 'bg-emerald-500 text-white border-transparent' : 
+                                          isFocused ? `ring-4 ring-indigo-500 z-20 scale-105 shadow-lg ${cellColors[idx] !== 'bg-white text-slate-800 border-slate-200' ? cellColors[idx] : 'bg-amber-100 border-amber-300 text-amber-900'}` : 
+                                          isHighlighted ? `${cellColors[idx] !== 'bg-white text-slate-800 border-slate-200' ? cellColors[idx] : 'bg-amber-50 border-amber-200 text-amber-900'}` : 
+                                          cellColors[idx]
+                                        }
                                     `}
                                 >
-                                    {clueNumbers[idx] && <span className="absolute top-1 left-1.5 text-[9px] font-bold text-slate-500 leading-none">{clueNumbers[idx]}</span>}
+                                    {clueNumbers[idx] && <span className={`absolute top-0.5 left-1 text-[10px] font-bold leading-none ${isFocused || isHighlighted ? (!cellColors[idx].includes('bg-white') ? 'text-white/80' : 'text-amber-700') : (!cellColors[idx].includes('bg-white') ? 'text-white/80' : 'text-slate-400')}`}>{clueNumbers[idx]}</span>}
                                     {char}
                                 </div>
                             )
                         })}
                     </div>
 
-                    <div className="mt-auto">
-                        <div className="flex justify-center gap-2 mb-4">
-                            {history.map((_, i) => <div key={i} className="w-3 h-3 rounded-full bg-rose-500 animate-pop"></div>)}
-                            {[...Array(maxAttempts - history.length)].map((_, i) => <div key={`e-${i}`} className="w-3 h-3 rounded-full bg-slate-200"></div>)}
+                    {status === 'playing' && (
+                        <div className="mt-auto px-1 w-full pb-2">
+                            {keys.map((row, rIdx) => (
+                                <div key={rIdx} className="flex justify-center gap-1 mb-1.5">
+                                    {row.map(key => {
+                                        const isSpecial = key.length > 1;
+                                        return (
+                                            <button key={key} onClick={() => onKeyPress(key)}
+                                                className={`h-11 sm:h-12 rounded font-bold text-xs flex items-center justify-center transition-colors shadow-sm
+                                                ${isSpecial ? 'px-3 sm:px-4 bg-slate-300 text-slate-700' : 'flex-1 max-w-[36px] bg-slate-200 text-slate-800'}
+                                                ${keyColors[key] || ''} active:scale-95`}
+                                            >
+                                                {key === 'BACKSPACE' ? <Icon name="delete" className="w-5 h-5" /> : key}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            ))}
                         </div>
-                        <button onClick={handleSubmit} disabled={status !== 'playing'} className={`w-full py-4 rounded-xl font-bold transition-all shadow-md flex justify-center gap-2 ${status === 'playing' ? 'bg-slate-900 text-white active:scale-95' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}>
+                    )}
+
+                    <div className="mt-2">
+                        <div className="flex justify-center gap-2 mb-3">
+                            {history.map((_, i) => <div key={i} className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pop"></div>)}
+                            {[...Array(maxAttempts - history.length)].map((_, i) => <div key={`e-${i}`} className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>)}
+                        </div>
+                        <button onClick={submitGrid} disabled={status !== 'playing'} className={`w-full py-3.5 rounded-xl font-bold transition-all shadow-md flex justify-center gap-2 ${status === 'playing' ? 'bg-slate-900 text-white active:scale-95' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}>
                             Check Puzzle
                         </button>
                     </div>
@@ -1022,7 +1165,7 @@
             );
         }
 
-        const Modals = ({ showHelp, setShowHelp, showStats, setShowStats, stats, timeToMidnight, handleShare, gameType, gameStatus, puzzle, shareImage, setShareImage, isCapturing, downloadImage, shareToApps, currentUser, onOpenAuth, dayIndex }) => {
+        const Modals = ({ showHelp, setShowHelp, showStats, setShowStats, stats, timeToMidnight, handleShare, gameType, gameStatus, puzzle, shareImage, setShareImage, isCapturing, downloadImage, shareToApps, currentUser, onOpenAuth, dayIndex, isTestMode }) => {
             const GameTitle = gameType.replace('_', ' ');
             const [activeTab, setActiveTab] = useState('personal'); 
             const [leaderboard, setLeaderboard] = useState([]);
@@ -1030,9 +1173,8 @@
 
             useEffect(() => {
                 let isMounted = true;
-                if (showStats && activeTab === 'global') {
+                if (showStats && activeTab === 'global' && !isTestMode) {
                     setLoadingLeaderboard(true);
-                    // Menambahkan sedikit jeda (timeout) agar data skor yang baru disave sempat masuk ke server
                     setTimeout(() => {
                         CloudDB.getLeaderboard(gameType, dayIndex).then(data => {
                             if (isMounted) { setLeaderboard(data); setLoadingLeaderboard(false); }
@@ -1040,9 +1182,8 @@
                     }, 500);
                 }
                 return () => { isMounted = false; };
-            }, [showStats, activeTab, gameType, dayIndex, currentUser]); // Tambahkan currentUser sebagai pemicu pembaruan
+            }, [showStats, activeTab, gameType, dayIndex, currentUser, isTestMode]);
 
-            // REDESIGNED INSTRUCTIONS (Beautiful NYT-Style UI)
             const renderInstructions = (type) => {
                 const HowToCard = ({ num, text, colorCls, icon }) => (
                     <div className="flex gap-4 items-start bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm mb-2">
@@ -1062,50 +1203,52 @@
                 );
 
                 switch(type) {
-                    case 'TALENT_GRID': return (
+                    case 'WORDFLOWER': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="Act as a Recruiter. Read the dossier to match 4 candidates to their perfect roles." />
-                            <HowToCard num="2" colorCls="bg-rose-500" text="Watch out for the Red Flag candidate who doesn't fit anywhere! Leave them unassigned." />
-                            <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
-                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
-                                <LegendCard color="bg-emerald-500" label="Green" desc="Perfect match. Right person, right role." />
-                                <LegendCard color="bg-amber-400" label="Yellow" desc="Good hire, but assigned to the wrong role." />
-                            </div>
+                            <HowToCard num="1" colorCls="bg-amber-400" text="Temukan PANGRAM korporat (7 huruf) untuk memenangkan game." />
+                            <HowToCard num="2" colorCls="bg-indigo-500" text="Rangkai kata minimal 4 huruf. Anda WAJIB menggunakan huruf yang ada di tengah (kuning)." />
+                            <HowToCard icon={<Icon name="alert-triangle" className="w-4 h-4"/>} colorCls="bg-rose-500" text="Pilih kata dengan hati-hati! Kata yang salah akan mengurangi kesempatan Anda." />
                         </div>
                     );
                     case 'JARGON_BUSTER': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="Read the definition to guess the 5-letter corporate buzzword." />
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Baca definisi untuk menebak buzzword (istilah) korporat." />
                             <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
-                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
-                                <LegendCard color="bg-emerald-500" label="Green" desc="Letter is in the word and in the correct spot." />
-                                <LegendCard color="bg-amber-400" label="Yellow" desc="Letter is in the word but in the wrong spot." />
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Panduan Warna</p>
+                                <LegendCard color="bg-emerald-500" label="Hijau" desc="Huruf benar dan posisinya tepat." />
+                                <LegendCard color="bg-amber-400" label="Kuning" desc="Huruf benar tapi posisinya salah." />
+                                <LegendCard color="bg-rose-500" label="Merah" desc="Huruf sama sekali tidak ada di kata tersebut." />
                             </div>
                         </div>
                     );
                     case 'PROCESS_FLOW': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="Standard Operating Procedures matter! Build the correct chronological sequence." />
-                            <HowToCard num="2" colorCls="bg-indigo-400" text="Tap the steps in order. Evaluate your sequence to get feedback." />
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="S.O.P itu penting! Susun langkah-langkah ini sesuai urutan kronologis yang benar." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Tekan langkah-langkah di bawah untuk membangun urutan Anda, lalu evaluasi." />
                             <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
-                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
-                                <LegendCard color="bg-emerald-500" label="Green" desc="Step is in the exact right order." />
-                                <LegendCard color="bg-amber-400" label="Yellow" desc="Step belongs to the process but is in the wrong order." />
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Panduan Warna</p>
+                                <LegendCard color="bg-emerald-500" label="Hijau" desc="Langkah berada di urutan yang tepat." />
+                                <LegendCard color="bg-amber-400" label="Kuning" desc="Langkah merupakan bagian dari proses, tapi urutannya salah." />
                             </div>
                         </div>
                     );
                     case 'SYNERGY_SQUARE': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="Find groups of 4 items that share a common corporate theme." />
-                            <HowToCard num="2" colorCls="bg-indigo-400" text="Select 4 tiles and tap 'Submit' to check if your connection is right." />
-                            <HowToCard icon={<Icon name="alert-triangle" className="w-4 h-4"/>} colorCls="bg-rose-500" text="Be careful! You only have 4 mistakes allowed before the game ends." />
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Temukan 4 kelompok kata yang memiliki kesamaan tema korporat." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Pilih 4 kotak dan tekan 'Submit' untuk mengecek kebenaran koneksinya." />
+                            <HowToCard icon={<Icon name="alert-triangle" className="w-4 h-4"/>} colorCls="bg-rose-500" text="Hati-hati! Anda hanya punya jatah 4 kali salah sebelum game berakhir." />
                         </div>
                     );
                     case 'MINI_CROSSWORD': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="Solve the 4x4 corporate crossword puzzle." />
-                            <HowToCard num="2" colorCls="bg-indigo-400" text="Tap a cell to type, use arrow keys to navigate, or tap spacebar to switch direction." />
-                            <HowToCard num="3" colorCls="bg-emerald-500" text="Hit 'Check Puzzle' when full! Incorrect letters will be marked in red." />
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Selesaikan teka-teki silang korporat 4x4 ini." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Pilih kotak untuk mengetik. Tekan baris petunjuk yang aktif untuk mengubah arah ketikan." />
+                            <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Panduan Warna</p>
+                                <LegendCard color="bg-emerald-500" label="Hijau" desc="Huruf benar di posisi yang benar." />
+                                <LegendCard color="bg-amber-400" label="Kuning" desc="Huruf ada di grid, tapi salah kotak." />
+                                <LegendCard color="bg-rose-500" label="Merah" desc="Huruf sama sekali salah." />
+                            </div>
                         </div>
                     );
                     default: return <p>Solve the daily logic puzzle before you run out of attempts.</p>;
@@ -1135,13 +1278,15 @@
                                 
                                 <div className="flex bg-slate-50 border-b border-slate-200" data-html2canvas-ignore>
                                     <button onClick={() => setActiveTab('personal')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'personal' ? 'text-indigo-700 bg-white border-b-2 border-indigo-600' : 'text-slate-500'}`}>My Stats</button>
-                                    <button onClick={() => setActiveTab('global')} className={`flex-1 py-3 text-xs font-bold transition-colors flex items-center justify-center gap-1 ${activeTab === 'global' ? 'text-indigo-700 bg-white border-b-2 border-indigo-600' : 'text-slate-500'}`}>
-                                        <Icon name="trophy" className="w-3 h-3" /> Global
-                                    </button>
+                                    {!isTestMode && (
+                                        <button onClick={() => setActiveTab('global')} className={`flex-1 py-3 text-xs font-bold transition-colors flex items-center justify-center gap-1 ${activeTab === 'global' ? 'text-indigo-700 bg-white border-b-2 border-indigo-600' : 'text-slate-500'}`}>
+                                            <Icon name="trophy" className="w-3 h-3" /> Global
+                                        </button>
+                                    )}
                                 </div>
 
                                 {activeTab === 'personal' && (
-                                    <>
+                                    <div className="flex flex-col">
                                         <div id="capture-node" className="p-6 bg-white relative">
                                             <div className="text-center mb-6 border-b border-slate-100 pb-4">
                                                 <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">CorpQuest</h1>
@@ -1152,33 +1297,42 @@
                                                 <div className="mb-6 border-b border-slate-100 pb-6 text-center">
                                                     <div className="text-5xl mb-3">{gameStatus === 'won' ? '🏆' : '📉'}</div>
                                                     <h2 className="text-2xl font-bold text-slate-900 mb-1">{gameStatus === 'won' ? 'Excellent Work!' : 'Tough Luck.'}</h2>
-                                                    {gameStatus === 'won' && (
+                                                    {gameStatus === 'won' && !isTestMode && (
                                                         <div className="text-sm font-bold text-emerald-600 bg-emerald-50 py-1 px-3 rounded-full inline-block mt-2 border border-emerald-100 shadow-sm">
-                                                            Score: {stats.lastScore || 0} pts
+                                                            Score: {stats?.lastScore || 0} pts
                                                         </div>
                                                     )}
                                                 </div>
                                             )}
 
-                                            {gameStatus === 'won' && puzzle?.trivia && (
+                                            {gameStatus !== 'playing' && puzzle?.trivia && (
                                                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left shadow-sm">
                                                     <h4 className="flex items-center gap-2 text-amber-800 font-bold mb-2"><Icon name="lightbulb" className="w-5 h-5" /> Fun Fact</h4>
                                                     <p className="text-sm text-amber-900 leading-relaxed font-medium">{puzzle.trivia}</p>
                                                 </div>
                                             )}
 
-                                            <h3 className="text-sm font-bold uppercase text-slate-400 mb-4 text-center">{GameTitle} Stats</h3>
-                                            <div className="grid grid-cols-4 gap-2 text-center">
-                                                <div className="flex flex-col"><span className="text-xl font-bold">{stats.played}</span><span className="text-[10px] uppercase text-slate-500">Played</span></div>
-                                                <div className="flex flex-col"><span className="text-xl font-bold">{stats.played > 0 ? Math.round((stats.wins/stats.played)*100) : 0}</span><span className="text-[10px] uppercase text-slate-500">Win %</span></div>
-                                                <div className="flex flex-col"><span className="text-xl font-bold">{stats.currentStreak}</span><span className="text-[10px] uppercase text-slate-500">Streak</span></div>
-                                                <div className="flex flex-col"><span className="text-xl font-bold">{stats.maxStreak}</span><span className="text-[10px] uppercase text-slate-500">Max</span></div>
-                                            </div>
+                                            {isTestMode ? (
+                                                <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl text-center">
+                                                    <p className="text-sm font-bold text-rose-800 mb-1">Test Drive Complete</p>
+                                                    <p className="text-xs text-rose-600">This score is not saved to your local history or the global leaderboard.</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <h3 className="text-sm font-bold uppercase text-slate-400 mb-4 text-center">{GameTitle} Stats</h3>
+                                                    <div className="grid grid-cols-4 gap-2 text-center">
+                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats?.played || 0}</span><span className="text-[10px] uppercase text-slate-500">Played</span></div>
+                                                        <div className="flex flex-col"><span className="text-xl font-bold">{(stats?.played || 0) > 0 ? Math.round(((stats?.wins || 0)/(stats?.played || 1))*100) : 0}</span><span className="text-[10px] uppercase text-slate-500">Win %</span></div>
+                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats?.currentStreak || 0}</span><span className="text-[10px] uppercase text-slate-500">Streak</span></div>
+                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats?.maxStreak || 0}</span><span className="text-[10px] uppercase text-slate-500">Max</span></div>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
 
                                         {gameStatus !== 'playing' && (
                                             <div data-html2canvas-ignore className="p-6 pt-0 bg-white">
-                                                {shareImage ? (
+                                                {shareImage && !isTestMode ? (
                                                     <div className="flex flex-col gap-3 animate-fade-in">
                                                         <div className="text-center text-xs font-bold text-slate-400 uppercase">Preview Share</div>
                                                         <img src={shareImage} className="w-48 mx-auto rounded-lg border-2 border-slate-200 shadow-md mb-2" alt="Screenshot Result" />
@@ -1194,24 +1348,30 @@
                                                     </div>
                                                 ) : (
                                                     <div className="flex flex-col">
-                                                        <div className="flex gap-3">
-                                                            <div className="flex-1 bg-slate-100 rounded-xl p-3 text-center border border-slate-200">
-                                                                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Next Puzzle</p>
-                                                                <p className="text-lg font-mono font-bold text-slate-800">{timeToMidnight}</p>
-                                                            </div>
-                                                            <button onClick={handleShare} disabled={isCapturing} className="flex-1 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shadow-md">
-                                                                {isCapturing ? 'Capturing...' : <><Icon name="camera" className="w-4 h-4" /> Screenshot</>}
+                                                        {isTestMode ? (
+                                                            <button onClick={() => window.location.reload()} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-md hover:bg-slate-800 transition-colors">
+                                                                Return to Daily Game
                                                             </button>
-                                                        </div>
-                                                        <FeedbackForm />
+                                                        ) : (
+                                                            <div className="flex gap-3">
+                                                                <div className="flex-1 bg-slate-100 rounded-xl p-3 text-center border border-slate-200">
+                                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Next Puzzle</p>
+                                                                    <p className="text-lg font-mono font-bold text-slate-800">{timeToMidnight}</p>
+                                                                </div>
+                                                                <button onClick={handleShare} disabled={isCapturing} className="flex-1 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shadow-md">
+                                                                    {isCapturing ? 'Capturing...' : <><Icon name="camera" className="w-4 h-4" /> Screenshot</>}
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                        {!isTestMode && <FeedbackForm />}
                                                     </div>
                                                 )}
                                             </div>
                                         )}
-                                    </>
+                                    </div>
                                 )}
 
-                                {activeTab === 'global' && (
+                                {activeTab === 'global' && !isTestMode && (
                                     <div className="p-6 bg-white min-h-[400px]">
                                         {!currentUser ? (
                                             <div className="text-center pt-8">
@@ -1263,94 +1423,132 @@
             )
         };
 
-        const AdminPanel = ({ isVisible, onClose, currentDayIndex }) => {
+        const AdminPanel = ({ isVisible, onClose, currentDayIndex, onTestDrive }) => {
             const [activeTab, setActiveTab] = useState(0); 
+            
             if (!isVisible) return null;
 
-            const tabs = [{ id: -1, label: 'Yesterday' }, { id: 0, label: 'Today' }, { id: 1, label: 'Tomorrow' }];
-            const activeData = getPuzzleDataForIndex(currentDayIndex + activeTab);
+            const tabs = [
+                { id: -1, label: 'Yesterday' }, 
+                { id: 0, label: 'Today' }, 
+                { id: 1, label: 'Tomorrow' },
+                { id: 'test', label: 'Test Drive' }
+            ];
 
-            const renderSolution = () => {
-                if (!activeData) return <div className="p-8 text-center text-slate-500">No puzzle scheduled.</div>;
-                const { gameType, puzzleData } = activeData;
-
-                if (gameType === 'TALENT_GRID') {
-                    const distractor = puzzleData.candidates.find(c => !Object.values(puzzleData.solution).includes(c));
-                    return (
-                        <div className="space-y-4 animate-slide-down">
-                            <div className="grid grid-cols-1 gap-2">
-                                {Object.entries(puzzleData.solution).map(([role, person]) => (
-                                    <div key={role} className="flex justify-between items-center bg-emerald-50 p-2.5 rounded-lg border border-emerald-100"><span className="text-xs font-semibold text-slate-700">{role}</span><span className="text-sm font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">{person}</span></div>
-                                ))}
-                            </div>
-                            <div className="bg-rose-50 border border-rose-100 p-3 rounded-lg flex justify-between"><span className="text-[10px] font-bold text-rose-500 uppercase">Red Flag</span><span className="text-sm font-bold text-rose-700">{distractor}</span></div>
-                        </div>
-                    );
-                }
-                if (gameType === 'JARGON_BUSTER') return (<div className="text-center p-4"><p className="text-sm italic mb-4">"{puzzleData.clue}"</p><p className="text-3xl font-bold tracking-[0.2em] text-emerald-600">{puzzleData.word}</p></div>);
-                if (gameType === 'PROCESS_FLOW') return (
-                    <div className="space-y-2">
-                        {puzzleData.solution.map((stepId, idx) => (
-                            <div key={stepId} className="flex gap-3 items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100"><span className="w-6 h-6 rounded bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold">{idx + 1}</span><span className="text-xs font-semibold text-emerald-900">{puzzleData.steps.find(s => s.id === stepId).text}</span></div>
+            const renderTestDrive = () => (
+                <div className="animate-fade-in">
+                    <p className="text-sm text-slate-600 mb-4 text-center">Launch a randomly generated sandbox instance of any game mode below. Scores will not be saved.</p>
+                    <div className="grid grid-cols-1 gap-3">
+                        {GAME_TYPES.map(type => (
+                            <button 
+                                key={type} 
+                                onClick={() => onTestDrive(type)} 
+                                className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-indigo-400 hover:shadow-md transition-all active:scale-95 group"
+                            >
+                                <span className="font-bold text-slate-800 group-hover:text-indigo-600">{type.replace('_', ' ')}</span>
+                                <Icon name="play" className="w-5 h-5 text-slate-300 group-hover:text-indigo-500" />
+                            </button>
                         ))}
-                    </div>
-                );
-                if (gameType === 'SYNERGY_SQUARE') return (
-                    <div className="flex flex-col gap-2">
-                        {puzzleData.categories.map((cat, i) => (
-                            <div key={i} className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-center">
-                                <p className="text-xs font-bold text-emerald-700 uppercase mb-1">{cat.title}</p>
-                                <p className="text-sm font-medium text-emerald-900">{cat.items.join(', ')}</p>
-                            </div>
-                        ))}
-                    </div>
-                );
-                if (gameType === 'MINI_CROSSWORD') return (
-                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
-                        <p className="text-xs text-emerald-600 font-bold uppercase mb-2">Completed Grid String</p>
-                        <p className="text-lg font-mono font-bold tracking-widest text-emerald-900 break-all">{puzzleData.target}</p>
-                    </div>
-                );
-                
-                return null;
-            };
-
-            return (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden">
-                        <div className="bg-slate-900 p-5 flex justify-between items-center text-white">
-                            <div className="flex items-center gap-3">
-                                <Icon name="shield" className="w-5 h-5 text-indigo-400" />
-                                <div><h2 className="font-bold leading-tight">Admin Portal</h2><p className="text-[10px] text-slate-400 font-medium tracking-wide">PUZZLE DATA PREVIEW</p></div>
-                            </div>
-                            <button onClick={onClose} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full"><Icon name="x" className="w-4 h-4" /></button>
-                        </div>
-                        <div className="flex p-2 bg-slate-50 border-b border-slate-200">
-                            {tabs.map(tab => (
-                                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all ${activeTab === tab.id ? 'bg-white text-indigo-700 shadow border border-slate-100' : 'text-slate-500'}`}>{tab.label}</button>
-                            ))}
-                        </div>
-                        <div className="p-6 overflow-y-auto hide-scrollbar flex-1 bg-white">
-                            {activeData && (
-                                <div className="mb-5 flex justify-between items-end border-b border-slate-100 pb-4">
-                                    <div>
-                                        <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">{activeData.gameType.replace('_', ' ')}</div>
-                                        <div className="text-lg font-bold text-slate-800 leading-none">{activeData.dateStr}</div>
-                                    </div>
-                                    <div className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">Day #{activeData.dayIndex + 1}</div>
-                                </div>
-                            )}
-                            {renderSolution()}
-                        </div>
                     </div>
                 </div>
             );
+
+            try {
+                const activeData = activeTab !== 'test' ? getPuzzleDataForIndex(currentDayIndex + activeTab) : null;
+
+                const renderSolution = () => {
+                    if (activeTab === 'test') return renderTestDrive();
+                    if (!activeData || !activeData.puzzleData) return <div className="p-8 text-center text-slate-500">No puzzle scheduled.</div>;
+                    
+                    const { gameType, puzzleData } = activeData;
+
+                    if (gameType === 'JARGON_BUSTER') return (<div className="text-center p-4"><p className="text-sm italic mb-4">"{puzzleData.clue}"</p><p className="text-3xl font-bold tracking-[0.2em] text-emerald-600">{puzzleData.word}</p></div>);
+                    if (gameType === 'PROCESS_FLOW') return (
+                        <div className="space-y-2">
+                            {puzzleData.solution?.map((stepId, idx) => (
+                                <div key={stepId} className="flex gap-3 items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100"><span className="w-6 h-6 rounded bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold">{idx + 1}</span><span className="text-xs font-semibold text-emerald-900">{puzzleData.steps.find(s => s.id === stepId)?.text}</span></div>
+                            ))}
+                        </div>
+                    );
+                    if (gameType === 'SYNERGY_SQUARE') return (
+                        <div className="flex flex-col gap-2">
+                            {puzzleData.categories?.map((cat, i) => (
+                                <div key={i} className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-center">
+                                    <p className="text-xs font-bold text-emerald-700 uppercase mb-1">{cat.title}</p>
+                                    <p className="text-sm font-medium text-emerald-900">{cat.items.join(', ')}</p>
+                                </div>
+                            ))}
+                        </div>
+                    );
+                    if (gameType === 'MINI_CROSSWORD') return (
+                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                            <p className="text-xs text-emerald-600 font-bold uppercase mb-2">Completed Grid String</p>
+                            <p className="text-lg font-mono font-bold tracking-widest text-emerald-900 break-all">{puzzleData.target}</p>
+                        </div>
+                    );
+                    if (gameType === 'WORDFLOWER') return (
+                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                            <p className="text-xs text-emerald-600 font-bold uppercase mb-2">Pangram</p>
+                            <p className="text-2xl font-black tracking-widest text-emerald-900 mb-4">{puzzleData.pangram}</p>
+                            <p className="text-xs text-emerald-600 font-bold uppercase mb-2">Valid Combinations</p>
+                            <div className="flex flex-wrap gap-1 justify-center">
+                                {puzzleData.validWords.map(w => <span key={w} className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">{w}</span>)}
+                            </div>
+                        </div>
+                    );
+                    
+                    return null;
+                };
+
+                return (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden">
+                            <div className="bg-slate-900 p-5 flex justify-between items-center text-white">
+                                <div className="flex items-center gap-3">
+                                    <Icon name="shield" className="w-5 h-5 text-indigo-400" />
+                                    <div><h2 className="font-bold leading-tight">Admin Portal</h2><p className="text-[10px] text-slate-400 font-medium tracking-wide">PUZZLE DATA & TOOLS</p></div>
+                                </div>
+                                <button onClick={onClose} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full"><Icon name="x" className="w-4 h-4" /></button>
+                            </div>
+                            <div className="flex p-2 bg-slate-50 border-b border-slate-200 overflow-x-auto hide-scrollbar">
+                                {tabs.map(tab => (
+                                    <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 min-w-[80px] py-2.5 px-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-indigo-700 shadow border border-slate-100' : 'text-slate-500 hover:bg-slate-100'}`}>{tab.label}</button>
+                                ))}
+                            </div>
+                            <div className="p-6 overflow-y-auto hide-scrollbar flex-1 bg-white">
+                                {activeData && activeTab !== 'test' && (
+                                    <div className="mb-5 flex justify-between items-end border-b border-slate-100 pb-4">
+                                        <div>
+                                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">{activeData.gameType?.replace('_', ' ')}</div>
+                                            <div className="text-lg font-bold text-slate-800 leading-none">{activeData.dateStr}</div>
+                                        </div>
+                                        <div className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">Day #{Number(activeData.dayIndex) + 1}</div>
+                                    </div>
+                                )}
+                                {renderSolution()}
+                            </div>
+                        </div>
+                    </div>
+                );
+            } catch (err) {
+                console.error("Admin Render Error:", err);
+                return (
+                    <div className="fixed inset-0 bg-slate-900/80 z-[60] flex items-center justify-center p-4">
+                        <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
+                            <Icon name="alert-triangle" className="w-12 h-12 text-rose-500 mx-auto mb-3" />
+                            <h2 className="text-xl font-bold text-slate-900 mb-2">Admin Data Error</h2>
+                            <p className="text-slate-500 text-sm mb-6">Failed to load the puzzle data for this date. The structure might be incomplete.</p>
+                            <button onClick={onClose} className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold">Close Admin Panel</button>
+                        </div>
+                    </div>
+                );
+            }
         };
 
         const DEFAULT_STATS = { played: 0, wins: 0, currentStreak: 0, maxStreak: 0, lastScore: 0 };
 
         function App() {
-            const params = getDayParams();
+            const [params, setParams] = useState(getDayParams());
             const [gameState, setGameState] = useState({ history: [], currentGuess: null, status: 'playing' });
             const [allStats, setAllStats] = useState({});
             
@@ -1381,13 +1579,15 @@
                 return () => unsubscribe();
             }, []);
 
+            // Initialize Game State
             useEffect(() => {
-                const savedStats = JSON.parse(localStorage.getItem('corpQuestStats_v5')) || {};
+                if (params.isTestMode) return; 
+
+                const savedStats = JSON.parse(localStorage.getItem('corpQuestStats_v6')) || {};
                 setAllStats(savedStats);
 
-                const savedStateRaw = localStorage.getItem('corpQuestState_v5');
                 let loadedState = false;
-                
+                const savedStateRaw = localStorage.getItem('corpQuestState_v6');
                 if (savedStateRaw) {
                     try {
                         const parsed = JSON.parse(savedStateRaw);
@@ -1400,9 +1600,7 @@
                 
                 if (!loadedState) {
                     let initialGuess = '';
-                    if (params.gameType === 'TALENT_GRID') {
-                        initialGuess = {}; params.puzzleData.roles.forEach(r => initialGuess[r] = '');
-                    } else if (params.gameType === 'PROCESS_FLOW') {
+                    if (params.gameType === 'PROCESS_FLOW') {
                         initialGuess = [];
                     } else if (params.gameType === 'SYNERGY_SQUARE') {
                         const rng = seededRNG(params.rngSeed);
@@ -1410,22 +1608,27 @@
                         initialGuess = { board: shuffleArray(allItems, rng), selected: [], solved: [] };
                     } else if (params.gameType === 'MINI_CROSSWORD') {
                         initialGuess = Array(16).fill('');
+                    } else if (params.gameType === 'WORDFLOWER') {
+                        initialGuess = '';
                     }
                     
                     setGameState({ history: [], currentGuess: initialGuess, status: 'playing' });
                     setGameStartTime(Date.now()); 
+                    
                     if (!savedStats[params.gameType]) setShowHelp(true);
                 }
-            }, []);
+            }, [params.todayStr, params.gameType, params.isTestMode, params.puzzleData, params.rngSeed]);
 
+            // Save Game State
             useEffect(() => {
-                if (gameState.history.length > 0 || gameState.status !== 'playing') {
-                    localStorage.setItem('corpQuestState_v5', JSON.stringify({
+                if (!params.isTestMode && (gameState.history.length > 0 || gameState.status !== 'playing')) {
+                    localStorage.setItem('corpQuestState_v6', JSON.stringify({
                         date: params.todayStr, gameType: params.gameType, gameState
                     }));
                 }
-            }, [gameState]);
+            }, [gameState, params]);
 
+            // Midnight Timer
             useEffect(() => {
                 const timer = setInterval(() => {
                     const now = new Date();
@@ -1435,14 +1638,19 @@
                     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((diff % (1000 * 60)) / 1000);
                     setTimeToMidnight(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
-                    if (h === 0 && m === 0 && s === 0) window.location.reload();
+                    if (h === 0 && m === 0 && s === 0 && !params.isTestMode) window.location.reload();
                 }, 1000);
                 return () => clearInterval(timer);
-            }, []);
+            }, [params.isTestMode]);
 
             const triggerToast = (msg, isError = false) => { setToastObj({ msg, isError }); setTimeout(() => setToastObj({ msg: '', isError: false }), 4000); };
 
             const handleGameOver = (status, attempts) => {
+                if (params.isTestMode) {
+                    setTimeout(() => setShowStats(true), 1500);
+                    return; 
+                }
+
                 const timeTakenSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
                 const score = calculateScore(status === 'won', attempts, params.maxAttempts, timeTakenSeconds);
 
@@ -1456,7 +1664,7 @@
 
                 const updatedAllStats = { ...allStats, [params.gameType]: newStats };
                 setAllStats(updatedAllStats);
-                localStorage.setItem('corpQuestStats_v5', JSON.stringify(updatedAllStats));
+                localStorage.setItem('corpQuestStats_v6', JSON.stringify(updatedAllStats));
                 
                 if (auth.currentUser) {
                     CloudDB.saveScore(currentUser || { uid: auth.currentUser.uid, name: auth.currentUser.displayName || auth.currentUser.email.split('@')[0] }, params.gameType, params.dayIndex, score, timeTakenSeconds);
@@ -1465,17 +1673,44 @@
             };
 
             const submitAdminPwd = () => {
-                if (adminPwd === ADMIN_PASSWORD) {
+                if (adminPwd.trim() === ADMIN_PASSWORD) {
                     setShowAdminAuth(false); setAdminPwd(''); setShowAdmin(true);
                 } else { triggerToast("Password Salah!", true); }
             };
 
+            const handleTestDrive = (type) => {
+                const fakeSeed = Math.floor(Math.random() * 1000000);
+                const puzzleData = generatePuzzleData(type, fakeSeed);
+                
+                let maxAttempts = 5;
+                if (type === 'JARGON_BUSTER') maxAttempts = 6;
+                if (type === 'PROCESS_FLOW') maxAttempts = 4;
+                if (type === 'SYNERGY_SQUARE') maxAttempts = 4; 
+                if (type === 'MINI_CROSSWORD') maxAttempts = 10;
+                if (type === 'WORDFLOWER') maxAttempts = 10;
+
+                let initialGuess = '';
+                if (type === 'PROCESS_FLOW') initialGuess = [];
+                else if (type === 'SYNERGY_SQUARE') {
+                    const rng = seededRNG(fakeSeed);
+                    const allItems = puzzleData.categories.flatMap(c => c.items);
+                    initialGuess = { board: shuffleArray(allItems, rng), selected: [], solved: [] };
+                } else if (type === 'MINI_CROSSWORD') initialGuess = Array(16).fill('');
+                else if (type === 'WORDFLOWER') initialGuess = '';
+
+                setGameState({ history: [], currentGuess: initialGuess, status: 'playing' });
+                setParams({ dayIndex: 99999, gameType: type, puzzleData, maxAttempts, todayStr: 'TEST_MODE', rngSeed: fakeSeed, isTestMode: true });
+                setGameStartTime(Date.now());
+                setShowAdmin(false);
+                setShowHelp(true);
+                triggerToast(`Test Drive: ${type.replace('_', ' ')}`, false);
+            };
+
             const handleLogin = async (user) => {
                 triggerToast(`Welcome back, ${user.name}!`);
-                if (gameState.status === 'won') {
+                if (gameState.status === 'won' && !params.isTestMode) {
                     const stats = allStats[params.gameType];
                     if (stats && stats.lastScore > 0) {
-                        // Tambahkan 'await' agar skor benar-benar tersimpan ke database sebelum UI melakukan fetch ulang
                         await CloudDB.saveScore(user, params.gameType, params.dayIndex, stats.lastScore, 60); 
                     }
                 }
@@ -1531,7 +1766,7 @@
                         </div>
                         <div className="text-center shrink-0">
                             <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">CorpQuest</h1>
-                            <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{params.gameType.replace('_', ' ')}</p>
+                            <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{params.isTestMode ? `TEST: ${params.gameType.replace('_', ' ')}` : params.gameType.replace('_', ' ')}</p>
                         </div>
                         <div className="flex-1 flex justify-end gap-1 relative">
                             <button onClick={() => setShowStats(true)} className="p-2 text-slate-400 hover:text-slate-800 transition rounded-full hover:bg-slate-100 relative">
@@ -1558,18 +1793,18 @@
                     </header>
 
                     <main className="flex-1 p-4 flex flex-col overflow-y-auto hide-scrollbar relative z-0">
-                        {params.gameType === 'TALENT_GRID' && <GridGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} />}
                         {params.gameType === 'JARGON_BUSTER' && <WordleGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} />}
                         {params.gameType === 'PROCESS_FLOW' && <SequenceGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} />}
                         {params.gameType === 'SYNERGY_SQUARE' && <SynergyGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} triggerToast={triggerToast} />}
                         {params.gameType === 'MINI_CROSSWORD' && <CrosswordGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} />}
+                        {params.gameType === 'WORDFLOWER' && <WordflowerGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} triggerToast={triggerToast} />}
                     </main>
 
                     <AuthModal isVisible={showAuthModal} onClose={() => setShowAuthModal(false)} onLogin={handleLogin} triggerToast={triggerToast} />
 
-                    <Modals showHelp={showHelp} setShowHelp={setShowHelp} showStats={showStats} setShowStats={setShowStats} stats={allStats[params.gameType] || DEFAULT_STATS} timeToMidnight={timeToMidnight} handleShare={handleShare} gameType={params.gameType} gameStatus={gameState.status} puzzle={params.puzzleData} shareImage={shareImage} setShareImage={setShareImage} isCapturing={isCapturing} downloadImage={downloadImage} shareToApps={shareToApps} currentUser={currentUser} onOpenAuth={() => { setShowStats(false); setShowAuthModal(true); }} dayIndex={params.dayIndex} />
+                    <Modals showHelp={showHelp} setShowHelp={setShowHelp} showStats={showStats} setShowStats={setShowStats} stats={allStats[params.gameType] || DEFAULT_STATS} timeToMidnight={timeToMidnight} handleShare={handleShare} gameType={params.gameType} gameStatus={gameState.status} puzzle={params.puzzleData} shareImage={shareImage} setShareImage={setShareImage} isCapturing={isCapturing} downloadImage={downloadImage} shareToApps={shareToApps} currentUser={currentUser} onOpenAuth={() => { setShowStats(false); setShowAuthModal(true); }} dayIndex={params.dayIndex} isTestMode={params.isTestMode} />
                     
-                    <AdminPanel isVisible={showAdmin} onClose={() => setShowAdmin(false)} currentDayIndex={params.dayIndex} />
+                    <AdminPanel isVisible={showAdmin} onClose={() => setShowAdmin(false)} currentDayIndex={params.dayIndex} onTestDrive={handleTestDrive} />
 
                     {showAdminAuth && (
                         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
