@@ -115,6 +115,7 @@
         
         .crossword-cell:focus { outline: none; box-shadow: inset 0 0 0 3px #6366f1; }
         .crossword-active-word { background-color: #e0e7ff; }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body>
@@ -141,7 +142,8 @@
                 'user': <g><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>,
                 'trophy': <g><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2Z"/></g>,
                 'log-out': <g><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></g>,
-                'google': <g viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" stroke="none"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" stroke="none"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" stroke="none"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" stroke="none"/></g>
+                'google': <g viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" stroke="none"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" stroke="none"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" stroke="none"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" stroke="none"/></g>,
+                'alert-triangle': <g><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></g>
             };
             
             if (name === 'google') {
@@ -180,7 +182,7 @@
         const CloudDB = {
             loginWithGoogle: async () => {
                 const provider = new firebase.auth.GoogleAuthProvider();
-                provider.setCustomParameters({ prompt: 'select_account' }); // Force account selection
+                provider.setCustomParameters({ prompt: 'select_account' });
                 try {
                     const result = await auth.signInWithPopup(provider);
                     return {
@@ -189,12 +191,17 @@
                         email: result.user.email
                     };
                 } catch (error) {
-                    console.error("Google Auth Error:", error);
-                    let errMsg = "Terjadi kesalahan saat login.";
+                    console.error("Google Auth Error Detail:", error);
+                    let errMsg = "Koneksi ke Google gagal. Coba lagi.";
+                    
                     if (error.code === 'auth/unauthorized-domain') {
-                        errMsg = "Domain Error: URL website ini belum diizinkan. Mohon tambahkan URL ini di Firebase Console > Authentication > Settings > Authorized Domains.";
+                        errMsg = `Domain Error: Tambahkan URL ini ke Firebase Console > Authentication > Settings > Authorized Domains.`;
+                    } else if (error.code === 'auth/popup-blocked') {
+                        errMsg = "Popup diblokir oleh browser Anda. Mohon izinkan popup untuk situs ini.";
                     } else if (error.code === 'auth/popup-closed-by-user') {
-                        errMsg = "Proses login dibatalkan.";
+                        errMsg = "Proses login dibatalkan sebelum selesai.";
+                    } else if (error.message) {
+                        errMsg = `Gagal: ${error.message}`;
                     }
                     throw new Error(errMsg);
                 }
@@ -230,148 +237,113 @@
             return Math.floor(score);
         };
 
+        // --- PROCEDURAL GENERATOR BANKS ---
         const NAMES = ['Alex', 'Jordan', 'Taylor', 'Sam', 'Casey', 'Morgan', 'Riley', 'Jamie', 'Dakota', 'Quinn', 'Avery', 'Parker', 'Drew', 'Reese', 'Blake'];
         
-        const TALENT_POOLS = [
-            { roles: ["UI/UX Intern", "Backend Dev", "IT Support", "Data Analyst"], clues: (c) => [`${c[0]} has an amazing portfolio but lacks backend skills.`, `The Backend Dev position must be filled by ${c[1]}.`, `${c[4]} (Red Flag) demanded a salary triple our budget.`, `${c[2]} loves fixing hardware and resetting passwords.`, `${c[3]} excels at VBA and SQL database management.`] },
-            { roles: ["Scrum Master", "Product Owner", "QA Tester", "DevOps Engineer"], clues: (c) => [`${c[0]} is a certified agile coach who keeps meetings strict.`, `${c[3]} automates CI/CD pipelines and loves cloud servers.`, `${c[1]} writes user stories and manages the product backlog.`, `${c[4]} (Red Flag) refuses to use project management software.`, `The QA Tester role belongs to ${c[2]}, who finds every bug.`] },
-            { roles: ["Marketing Lead", "Copywriter", "SEO Specialist", "Social Media"], clues: (c) => [`${c[0]} manages the entire campaign strategy and budget.`, `${c[3]} creates viral TikToks and Instagram reels.`, `${c[4]} (Red Flag) copied an entire campaign from a competitor.`, `${c[2]} optimizes our website for Google search rankings.`, `The Copywriter role belongs to ${c[1]}, who crafts all our newsletters.`] },
-            { roles: ["CFO", "Controller", "Tax Specialist", "Payroll Admin"], clues: (c) => [`${c[2]} strictly handles IRS compliance and audits.`, `${c[1]} oversees daily accounting operations.`, `${c[0]} is the Chief Financial Officer.`, `${c[4]} (Red Flag) was caught embezzling funds at their last job.`, `${c[3]} processes bi-weekly salary distributions.`] }
+        // Massive expansion for procedural categories (Synergy Square combinations = thousands of unique days)
+        const SYNERGY_CATEGORIES_ALL = [
+            { title: "MEETING TYPES", items: ["STANDUP", "ALL HANDS", "1ON1", "TOWN HALL"] },
+            { title: "DEPARTMENTS", items: ["SALES", "MARKETING", "FINANCE", "LEGAL"] },
+            { title: "EMAIL SIGN-OFFS", items: ["BEST", "REGARDS", "CHEERS", "SINCERELY"] },
+            { title: "COMPENSATION", items: ["SALARY", "BONUS", "EQUITY", "COMMISSION"] },
+            { title: "AGILE TERMS", items: ["SPRINT", "SCRUM", "KANBAN", "EPIC"] },
+            { title: "OFFICE SUPPLIES", items: ["STAPLER", "PRINTER", "PAPER", "PENS"] },
+            { title: "C-SUITE ROLES", items: ["CEO", "CFO", "CTO", "COO"] },
+            { title: "SPREADSHEET", items: ["CELL", "ROW", "COLUMN", "FORMULA"] },
+            { title: "TIME OFF", items: ["SICK", "VACATION", "BEREAVEMENT", "JURY DUTY"] },
+            { title: "SLACK STATUSES", items: ["ACTIVE", "AWAY", "SNOOZED", "OFFLINE"] },
+            { title: "PERFORMANCE", items: ["PEER", "MANAGER", "SELF", "CALIBRATION"] },
+            { title: "IT ISSUES", items: ["NETWORK", "HARDWARE", "PASSWORD", "SOFTWARE"] },
+            { title: "CLOUD PROVIDERS", items: ["AWS", "AZURE", "GCP", "ORACLE"] },
+            { title: "BENEFITS", items: ["HEALTH", "DENTAL", "VISION", "WELLNESS"] },
+            { title: "DOC FORMATS", items: ["PDF", "DOCX", "XLSX", "PPTX"] }
+        ];
+
+        const TALENT_DEPARTMENTS = [
+            { roles: ["UI/UX Intern", "Backend Dev", "IT Support", "Data Analyst"] },
+            { roles: ["Scrum Master", "Product Owner", "QA Tester", "DevOps Engineer"] },
+            { roles: ["Marketing Lead", "Copywriter", "SEO Specialist", "Social Media"] },
+            { roles: ["CFO", "Controller", "Tax Specialist", "Payroll Admin"] },
+            { roles: ["Legal Counsel", "Compliance", "Contract Mgr", "Paralegal"] }
         ];
 
         const JARGON_BANK = [
-            { word: 'PIVOT', clue: "A fundamental shift in business strategy to avoid failure.", trivia: "YouTube originally started as a video dating site called 'Tune In Hook Up' before doing this to become a general video platform." },
-            { word: 'CHURN', clue: "The rate at which employees leave a workforce.", trivia: "A high churn rate can cost a company up to 1.5x the annual salary of the departing employees." },
-            { word: 'AGILE', clue: "Project methodology characterized by short iterative phases.", trivia: "The Agile Manifesto was written in 2001 by 17 software developers at a ski resort in Utah." },
-            { word: 'MERIT', clue: "Type of pay increase based on individual performance.", trivia: "Merit pay systems trace back to the mid-19th century when governments tried to standardize bureaucratic performance." },
-            { word: 'SILOS', clue: "When teams hoard information and refuse to collaborate.", trivia: "The term originates from agriculture, where tall towers keep different types of grain completely separated." },
-            { word: 'SCOPE', clue: "The defined features and deliverables of a project.", trivia: "'Scope creep' is cited as the primary reason 50% of corporate IT projects go over budget." },
-            { word: 'ALIGN', clue: "To get everyone on the same page and in agreement.", trivia: "This word surged in corporate popularity in the 2010s to replace the harsher 'comply' or 'agree'." },
-            { word: 'BANDWIDTH', clue: "The energy or time a person has available for new tasks.", trivia: "Borrowing from telecommunications, this metaphor treats human energy like network capacity." }
+            { word: 'PIVOT', clue: "A fundamental shift in business strategy to avoid failure.", trivia: "YouTube originally started as a video dating site before doing this." },
+            { word: 'CHURN', clue: "The rate at which employees leave a workforce.", trivia: "A high churn rate can cost a company up to 1.5x the annual salary of departing employees." },
+            { word: 'AGILE', clue: "Project methodology characterized by short iterative phases.", trivia: "The Agile Manifesto was written in 2001 by 17 developers at a ski resort." },
+            { word: 'MERIT', clue: "Type of pay increase based on individual performance.", trivia: "Merit pay systems trace back to the mid-19th century." },
+            { word: 'SILOS', clue: "When teams hoard information and refuse to collaborate.", trivia: "The term originates from agriculture, where tall towers keep grain separated." },
+            { word: 'SCOPE', clue: "The defined features and deliverables of a project.", trivia: "'Scope creep' is the primary reason 50% of IT projects go over budget." },
+            { word: 'ALIGN', clue: "To get everyone on the same page and in agreement.", trivia: "Surged in corporate popularity in the 2010s to replace the harsher 'comply'." },
+            { word: 'SYNER', clue: "Short for Synergy; combined action creating a greater effect.", trivia: "Became a massively overused buzzword in the late 1990s." },
+            { word: 'ONSET', clue: "The beginning or start of a new project.", trivia: "A clear onset plan reduces project failure rates by 30%." },
+            { word: 'BONUS', clue: "Extra compensation above standard salary.", trivia: "The word literally means 'good' in Latin." }
         ];
 
         const PROCESS_BANK = [
-            { title: "Standard Offboarding", desc: "Arrange chronological order of resignation.", steps: ["Receive Formal Resignation", "Notify IT & Security", "Conduct Exit Interview", "Process Final Pay", "Deactivate Badges"], trivia: "A structured offboarding process reduces the risk of data breaches from former employees by 70%." },
-            { title: "Discipline Escalation", desc: "Order the stages of progressive discipline.", steps: ["Verbal Warning", "Written Warning", "Performance Improvement Plan", "Final Warning", "Termination"], trivia: "Progressive discipline policies protect companies from wrongful termination lawsuits by establishing a documented trail of intervention." },
-            { title: "Expense Reimbursement", desc: "Order the steps to process an employee expense.", steps: ["Employee Incurs Expense", "Submit Receipts to System", "Manager Approval", "Finance Audit", "Funds Deposited to Account"], trivia: "Automated expense systems reduce processing costs by an average of 58% per report." },
-            { title: "Software Release", desc: "Order the steps of a typical SDLC deployment.", steps: ["Write Code", "Code Review (PR)", "QA Testing", "Deploy to Staging", "Push to Production"], trivia: "Companies using robust CI/CD deploy code 208 times more frequently than traditional organizations." }
-        ];
-
-        const SYNERGY_BANK = [
-            {
-                categories: [
-                    { title: "MEETING TYPES", items: ["STANDUP", "ALL HANDS", "1ON1", "TOWN HALL"], bg: "bg-amber-300", text: "text-amber-900" },
-                    { title: "DEPARTMENTS", items: ["SALES", "MARKETING", "FINANCE", "LEGAL"], bg: "bg-emerald-300", text: "text-emerald-900" },
-                    { title: "EMAIL SIGN-OFFS", items: ["BEST", "REGARDS", "CHEERS", "SINCERELY"], bg: "bg-blue-300", text: "text-blue-900" },
-                    { title: "COMPENSATION", items: ["SALARY", "BONUS", "EQUITY", "COMMISSION"], bg: "bg-fuchsia-300", text: "text-fuchsia-900" }
-                ],
-                trivia: "Grouping related concepts is a great way to structure a presentation and reduce audience cognitive load."
-            },
-            {
-                categories: [
-                    { title: "AGILE TERMS", items: ["SPRINT", "SCRUM", "KANBAN", "EPIC"], bg: "bg-amber-300", text: "text-amber-900" },
-                    { title: "OFFICE SUPPLIES", items: ["STAPLER", "PRINTER", "PAPER", "PENS"], bg: "bg-emerald-300", text: "text-emerald-900" },
-                    { title: "C-SUITE ROLES", items: ["CEO", "CFO", "CTO", "COO"], bg: "bg-blue-300", text: "text-blue-900" },
-                    { title: "JARGON VERBS", items: ["PIVOT", "SYNERGIZE", "ALIGN", "LEVERAGE"], bg: "bg-fuchsia-300", text: "text-fuchsia-900" }
-                ],
-                trivia: "The term 'Synergy' became a massively overused corporate buzzword in the late 1990s."
-            },
-            {
-                categories: [
-                    { title: "SPREADSHEET TERMS", items: ["CELL", "ROW", "COLUMN", "FORMULA"], bg: "bg-amber-300", text: "text-amber-900" },
-                    { title: "TIME OFF", items: ["SICK", "VACATION", "BEREAVEMENT", "JURY DUTY"], bg: "bg-emerald-300", text: "text-emerald-900" },
-                    { title: "SLACK STATUSES", items: ["ACTIVE", "AWAY", "SNOOZED", "OFFLINE"], bg: "bg-blue-300", text: "text-blue-900" },
-                    { title: "PERFORMANCE REVIEWS", items: ["PEER", "MANAGER", "SELF", "CALIBRATION"], bg: "bg-fuchsia-300", text: "text-fuchsia-900" }
-                ],
-                trivia: "The first electronic spreadsheet, VisiCalc, was released in 1979 and drove the initial success of the Apple II."
-            }
+            { title: "Standard Offboarding", desc: "Arrange chronological order of resignation.", steps: ["Receive Formal Resignation", "Notify IT & Security", "Conduct Exit Interview", "Process Final Pay", "Deactivate Badges"] },
+            { title: "Discipline Escalation", desc: "Order the stages of progressive discipline.", steps: ["Verbal Warning", "Written Warning", "Performance Improvement Plan", "Final Warning", "Termination"] },
+            { title: "Expense Reimbursement", desc: "Order the steps to process an employee expense.", steps: ["Employee Incurs Expense", "Submit Receipts to System", "Manager Approval", "Finance Audit", "Funds Deposited to Account"] },
+            { title: "Software Release", desc: "Order the steps of a typical SDLC deployment.", steps: ["Write Code", "Code Review (PR)", "QA Testing", "Deploy to Staging", "Push to Production"] },
+            { title: "Recruitment Pipeline", desc: "Order the hiring process.", steps: ["Post Job Description", "Screen Resumes", "Initial HR Call", "Technical Interview", "Extend Offer"] }
         ];
 
         const CROSSWORD_BANK = [
-            {
-                target: "TIMEIDEAMEETEATS",
-                across: [
-                    { num: 1, clue: "Clock concept" },
-                    { num: 5, clue: "Brainstorm result" },
-                    { num: 6, clue: "Gather in a conference room" },
-                    { num: 7, clue: "Lunches at the desk" }
-                ],
-                down: [
-                    { num: 1, clue: "Timesheet entry" },
-                    { num: 2, clue: "'I have an ___!'" },
-                    { num: 3, clue: "Calendar invite action" },
-                    { num: 4, clue: "Consumes the catering" }
-                ],
-                trivia: "Mini crosswords improve memory retention and problem-solving skills in under 2 minutes."
-            },
-            {
-                target: "BOSSONTOSTEPSOPS",
-                across: [
-                    { num: 1, clue: "The Manager" },
-                    { num: 5, clue: "Aware of the situation" },
-                    { num: 6, clue: "One rung on a career ladder" },
-                    { num: 7, clue: "Concessions to appease someone" }
-                ],
-                down: [
-                    { num: 1, clue: "The Manager" },
-                    { num: 2, clue: "Aware of the situation" },
-                    { num: 3, clue: "One rung on a career ladder" },
-                    { num: 4, clue: "Concessions to appease someone" }
-                ],
-                trivia: "Word squares (where across and down clues match perfectly) date back to ancient Roman times!"
-            },
-            {
-                target: "WORKOBOEROUTKETO",
-                across: [
-                    { num: 1, clue: "The 9-to-5 activity" },
-                    { num: 5, clue: "Woodwind instrument" },
-                    { num: 6, clue: "Defeat decisively" },
-                    { num: 7, clue: "Low-carb diet popular in tech" }
-                ],
-                down: [
-                    { num: 1, clue: "The 9-to-5 activity" },
-                    { num: 2, clue: "Woodwind instrument" },
-                    { num: 3, clue: "Defeat decisively" },
-                    { num: 4, clue: "Low-carb diet popular in tech" }
-                ],
-                trivia: "The modern 9-to-5 workday was popularized by Henry Ford in 1926 to maximize worker efficiency."
-            }
+            { target: "TIMEIDEAMEETEATS", across: [{ num: 1, clue: "Clock concept" }, { num: 5, clue: "Brainstorm result" }, { num: 6, clue: "Gather in a conference room" }, { num: 7, clue: "Lunches at the desk" }], down: [{ num: 1, clue: "Timesheet entry" }, { num: 2, clue: "'I have an ___!'" }, { num: 3, clue: "Calendar invite action" }, { num: 4, clue: "Consumes the catering" }] },
+            { target: "BOSSONTOSTEPSOPS", across: [{ num: 1, clue: "The Manager" }, { num: 5, clue: "Aware of the situation" }, { num: 6, clue: "One rung on a career ladder" }, { num: 7, clue: "Concessions to appease someone" }], down: [{ num: 1, clue: "The Manager" }, { num: 2, clue: "Aware of the situation" }, { num: 3, clue: "One rung on a career ladder" }, { num: 4, clue: "Concessions to appease someone" }] },
+            { target: "WORKOBOEROUTKETO", across: [{ num: 1, clue: "The 9-to-5 activity" }, { num: 5, clue: "Woodwind instrument" }, { num: 6, clue: "Defeat decisively" }, { num: 7, clue: "Low-carb diet popular in tech" }], down: [{ num: 1, clue: "The 9-to-5 activity" }, { num: 2, clue: "Woodwind instrument" }, { num: 3, clue: "Defeat decisively" }, { num: 4, clue: "Low-carb diet popular in tech" }] }
         ];
 
         const getPuzzleDataForIndex = (dayIndex) => {
             if (dayIndex < 0) return null;
             const rng = seededRNG(dayIndex + 2000); 
             
-            // 5 Best NYT-inspired Games Rotation
             const GAME_TYPES = ['JARGON_BUSTER', 'TALENT_GRID', 'SYNERGY_SQUARE', 'PROCESS_FLOW', 'MINI_CROSSWORD'];
-            
             const gameType = GAME_TYPES[dayIndex % 5];
             let puzzleData = {};
 
             if (gameType === 'TALENT_GRID') {
-                const pool = pickRandom(TALENT_POOLS, rng);
+                // Procedural Talent Grid Generation
+                const dept = pickRandom(TALENT_DEPARTMENTS, rng);
                 const candidates = shuffleArray([...NAMES], rng).slice(0, 5); 
+                
+                // Logic Skeletons to inject names/roles
+                const skeletons = [
+                    (r, n) => [`The ${r[0]} role must be filled by ${n[0]}.`, `${n[1]} has the perfect background for ${r[1]}.`, `${n[4]} (Red Flag) demanded a salary triple our budget.`, `${n[2]} loves the tasks associated with ${r[2]}.`, `${n[3]} excels at ${r[3]}.`],
+                    (r, n) => [`${n[2]} is our new ${r[2]}.`, `The ${r[3]} belongs to ${n[3]}, who has 10 years experience.`, `${n[0]} is a certified expert and will be the ${r[0]}.`, `${n[4]} (Red Flag) refuses to use our project management software.`, `${n[1]} will take on the ${r[1]} position.`]
+                ];
+                const cluesGen = pickRandom(skeletons, rng);
+
                 puzzleData = {
-                    roles: pool.roles, candidates,
-                    solution: { [pool.roles[0]]: candidates[0], [pool.roles[1]]: candidates[1], [pool.roles[2]]: candidates[2], [pool.roles[3]]: candidates[3] },
-                    clues: pool.clues(candidates),
+                    roles: dept.roles, candidates,
+                    solution: { [dept.roles[0]]: candidates[0], [dept.roles[1]]: candidates[1], [dept.roles[2]]: candidates[2], [dept.roles[3]]: candidates[3] },
+                    clues: cluesGen(dept.roles, candidates),
                     trivia: "A bad hire can cost a company up to 30% of the employee's first-year earnings in lost productivity."
                 };
             } 
-            else if (gameType === 'JARGON_BUSTER') puzzleData = dayIndex === 0 ? JARGON_BANK[0] : pickRandom(JARGON_BANK, rng);
+            else if (gameType === 'JARGON_BUSTER') puzzleData = JARGON_BANK[dayIndex % JARGON_BANK.length];
             else if (gameType === 'PROCESS_FLOW') {
-                const base = pickRandom(PROCESS_BANK, rng);
+                const base = PROCESS_BANK[dayIndex % PROCESS_BANK.length];
                 puzzleData = {
-                    title: base.title, desc: base.desc, trivia: base.trivia,
+                    title: base.title, desc: base.desc,
                     steps: base.steps.map((text, i) => ({ id: String.fromCharCode(65 + i), text })),
                     solution: base.steps.map((_, i) => String.fromCharCode(65 + i))
                 };
             }
             else if (gameType === 'SYNERGY_SQUARE') {
-                puzzleData = pickRandom(SYNERGY_BANK, rng);
+                // Procedural Synergy Square
+                const colors = ["bg-amber-300 text-amber-900", "bg-emerald-300 text-emerald-900", "bg-blue-300 text-blue-900", "bg-fuchsia-300 text-fuchsia-900"];
+                const selectedCats = shuffleArray([...SYNERGY_CATEGORIES_ALL], rng).slice(0, 4);
+                
+                puzzleData = {
+                    categories: selectedCats.map((cat, i) => {
+                        const [bg, text] = colors[i].split(" ");
+                        return { title: cat.title, items: cat.items, bg, text };
+                    })
+                };
             }
             else if (gameType === 'MINI_CROSSWORD') {
-                puzzleData = pickRandom(CROSSWORD_BANK, rng);
+                puzzleData = CROSSWORD_BANK[dayIndex % CROSSWORD_BANK.length];
             }
             
             const targetDate = new Date(EPOCH_DATE);
@@ -397,7 +369,7 @@
             let maxAttempts = 5;
             if (gameType === 'JARGON_BUSTER') maxAttempts = 6;
             if (gameType === 'PROCESS_FLOW') maxAttempts = 4;
-            if (gameType === 'SYNERGY_SQUARE') maxAttempts = 4; // Max mistakes allowed
+            if (gameType === 'SYNERGY_SQUARE') maxAttempts = 4; 
             if (gameType === 'MINI_CROSSWORD') maxAttempts = 5;
 
             return { dayIndex, gameType, puzzleData, maxAttempts, todayStr: localDateStr, rngSeed: dayIndex + 2000 };
@@ -419,8 +391,8 @@
 
         const Toast = ({ message, isVisible, isError }) => (
             <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'} w-[90%] max-w-sm`}>
-                <div className={`${isError ? 'bg-rose-900 text-white' : 'bg-slate-900 text-white'} px-6 py-3 rounded-2xl shadow-2xl text-sm font-semibold flex items-start gap-3`}>
-                    <Icon name={isError ? "x" : "check-circle-2"} className={`w-5 h-5 shrink-0 mt-0.5 ${isError ? 'text-rose-400' : 'text-emerald-400'}`} />
+                <div className={`${isError ? 'bg-rose-900 text-white' : 'bg-slate-900 text-white'} px-4 py-3 rounded-2xl shadow-2xl text-sm font-semibold flex items-start gap-3`}>
+                    <Icon name={isError ? "alert-triangle" : "check-circle-2"} className={`w-5 h-5 shrink-0 mt-0.5 ${isError ? 'text-rose-400' : 'text-emerald-400'}`} />
                     <span className="leading-relaxed">{message}</span>
                 </div>
             </div>
@@ -740,7 +712,6 @@
             const handleSubmit = () => {
                 if (selected.length !== 4) { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); return; }
                 
-                // Find matching category
                 const match = puzzle.categories.find(cat => selected.every(item => cat.items.includes(item)));
                 
                 if (match) {
@@ -767,17 +738,6 @@
                         setGameState(prev => ({ ...prev, history: newHistory, currentGuess: { ...prev.currentGuess, selected: [] } }));
                     }
                 }
-            };
-
-            const renderDots = () => {
-                return (
-                    <div className="flex justify-center gap-2 mb-6">
-                        <span className="text-sm font-bold text-slate-500 mr-2">Mistakes remaining:</span>
-                        {[...Array(maxAttempts - mistakes)].map((_, i) => (
-                            <div key={i} className="w-4 h-4 rounded-full bg-slate-400"></div>
-                        ))}
-                    </div>
-                );
             };
 
             return (
@@ -821,7 +781,12 @@
 
                     {status === 'playing' && (
                         <div className="mt-auto">
-                            {renderDots()}
+                            <div className="flex justify-center gap-2 mb-6">
+                                <span className="text-sm font-bold text-slate-500 mr-2">Mistakes remaining:</span>
+                                {[...Array(maxAttempts - mistakes)].map((_, i) => (
+                                    <div key={i} className="w-4 h-4 rounded-full bg-slate-400"></div>
+                                ))}
+                            </div>
                             <div className="flex gap-2">
                                 <button onClick={() => setGameState(prev => ({...prev, currentGuess: { ...prev.currentGuess, selected: [] }}))} className="flex-1 py-4 rounded-full font-bold bg-white border border-slate-300 text-slate-600 shadow-sm active:scale-95 transition-transform">Deselect</button>
                                 <button onClick={handleSubmit} disabled={selected.length !== 4} className={`flex-1 py-4 rounded-full font-bold shadow-md transition-all ${selected.length === 4 ? 'bg-slate-900 text-white active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>Submit</button>
@@ -1058,43 +1023,71 @@
                 return () => { isMounted = false; };
             }, [showStats, activeTab, gameType, dayIndex]);
 
+            // REDESIGNED INSTRUCTIONS (Beautiful NYT-Style UI)
             const renderInstructions = (type) => {
+                const HowToCard = ({ num, text, colorCls, icon }) => (
+                    <div className="flex gap-4 items-start bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm mb-2">
+                        <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${colorCls}`}>{icon || num}</div>
+                        <div className="text-sm font-medium text-slate-700 leading-snug">{text}</div>
+                    </div>
+                );
+                
+                const LegendCard = ({ color, label, desc }) => (
+                    <div className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
+                        <div className={`w-8 h-8 rounded shrink-0 shadow-sm ${color}`}></div>
+                        <div>
+                            <div className="text-xs font-bold text-slate-800">{label}</div>
+                            <div className="text-[10px] text-slate-500 font-medium">{desc}</div>
+                        </div>
+                    </div>
+                );
+
                 switch(type) {
                     case 'TALENT_GRID': return (
-                        <ul className="space-y-3 text-sm text-slate-600 font-medium">
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">1.</span> Act as a Recruiter. Read the dossier to match 4 candidates to their perfect roles.</li>
-                            <li className="flex gap-3 items-start"><span className="text-rose-500 mt-0.5">2.</span> Watch out for the <b>Red Flag</b> candidate who doesn't fit anywhere! Leave them unassigned.</li>
-                            <li className="flex gap-3 items-start"><span className="text-emerald-500 text-lg leading-none">🟩</span> Green = Perfect match.</li>
-                            <li className="flex gap-3 items-start"><span className="text-amber-500 text-lg leading-none">🟨</span> Yellow = Good hire, wrong role.</li>
-                        </ul>
+                        <div className="space-y-1">
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Act as a Recruiter. Read the dossier to match 4 candidates to their perfect roles." />
+                            <HowToCard num="2" colorCls="bg-rose-500" text="Watch out for the Red Flag candidate who doesn't fit anywhere! Leave them unassigned." />
+                            <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
+                                <LegendCard color="bg-emerald-500" label="Green" desc="Perfect match. Right person, right role." />
+                                <LegendCard color="bg-amber-400" label="Yellow" desc="Good hire, but assigned to the wrong role." />
+                            </div>
+                        </div>
                     );
                     case 'JARGON_BUSTER': return (
-                        <ul className="space-y-3 text-sm text-slate-600 font-medium">
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">1.</span> Read the definition to guess the 5-letter corporate buzzword.</li>
-                            <li className="flex gap-3 items-start"><span className="text-emerald-500 text-lg leading-none">🟩</span> Green = Correct letter, correct spot.</li>
-                            <li className="flex gap-3 items-start"><span className="text-amber-500 text-lg leading-none">🟨</span> Yellow = Correct letter, wrong spot.</li>
-                        </ul>
+                        <div className="space-y-1">
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Read the definition to guess the 5-letter corporate buzzword." />
+                            <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
+                                <LegendCard color="bg-emerald-500" label="Green" desc="Letter is in the word and in the correct spot." />
+                                <LegendCard color="bg-amber-400" label="Yellow" desc="Letter is in the word but in the wrong spot." />
+                            </div>
+                        </div>
                     );
                     case 'PROCESS_FLOW': return (
-                        <ul className="space-y-3 text-sm text-slate-600 font-medium">
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">1.</span> Standard Operating Procedures matter!</li>
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">2.</span> Tap the steps below to build the correct chronological sequence.</li>
-                            <li className="flex gap-3 items-start"><span className="text-emerald-500 text-lg leading-none">🟩</span> Green = Step is in the exact right order.</li>
-                        </ul>
+                        <div className="space-y-1">
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Standard Operating Procedures matter! Build the correct chronological sequence." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Tap the steps in order. Evaluate your sequence to get feedback." />
+                            <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
+                                <LegendCard color="bg-emerald-500" label="Green" desc="Step is in the exact right order." />
+                                <LegendCard color="bg-amber-400" label="Yellow" desc="Step belongs to the process but is in the wrong order." />
+                            </div>
+                        </div>
                     );
                     case 'SYNERGY_SQUARE': return (
-                        <ul className="space-y-3 text-sm text-slate-600 font-medium">
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">1.</span> Find groups of 4 items that share a common corporate theme.</li>
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">2.</span> Select 4 tiles and tap 'Submit' to check if your connection is right.</li>
-                            <li className="flex gap-3 items-start"><span className="text-rose-500 mt-0.5">3.</span> Be careful! You only have 4 mistakes allowed before the game ends.</li>
-                        </ul>
+                        <div className="space-y-1">
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Find groups of 4 items that share a common corporate theme." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Select 4 tiles and tap 'Submit' to check if your connection is right." />
+                            <HowToCard icon={<Icon name="alert-triangle" className="w-4 h-4"/>} colorCls="bg-rose-500" text="Be careful! You only have 4 mistakes allowed before the game ends." />
+                        </div>
                     );
                     case 'MINI_CROSSWORD': return (
-                        <ul className="space-y-3 text-sm text-slate-600 font-medium">
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">1.</span> Solve the 4x4 corporate crossword puzzle.</li>
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">2.</span> Tap a cell to type, use arrow keys to navigate, or tap spacebar to switch between Across and Down clues.</li>
-                            <li className="flex gap-3 items-start"><span className="text-indigo-500 mt-0.5">3.</span> Hit 'Check Puzzle' when full! Incorrect letters will turn red.</li>
-                        </ul>
+                        <div className="space-y-1">
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Solve the 4x4 corporate crossword puzzle." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Tap a cell to type, use arrow keys to navigate, or tap spacebar to switch direction." />
+                            <HowToCard num="3" colorCls="bg-emerald-500" text="Hit 'Check Puzzle' when full! Incorrect letters will be marked in red." />
+                        </div>
                     );
                     default: return <p>Solve the daily logic puzzle before you run out of attempts.</p>;
                 }
@@ -1106,10 +1099,12 @@
                         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                             <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative animate-slide-down">
                                 <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800"><Icon name="x" className="w-5 h-5" /></button>
-                                <h2 className="text-xl font-bold mb-1">How to Play</h2>
-                                <h3 className="text-sm font-semibold text-indigo-600 mb-4 pb-2 border-b border-slate-100">{GameTitle}</h3>
+                                <h2 className="text-xl font-bold mb-1 text-slate-900">How to Play</h2>
+                                <h3 className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-4 pb-3 border-b border-slate-100">{GameTitle}</h3>
+                                
                                 {renderInstructions(gameType)}
-                                <button onClick={() => setShowHelp(false)} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold mt-6 active:scale-95 transition-transform">Let's Play</button>
+                                
+                                <button onClick={() => setShowHelp(false)} className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold mt-6 active:scale-95 transition-transform shadow-lg">Let's Play</button>
                             </div>
                         </div>
                     )}
