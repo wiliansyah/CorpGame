@@ -39,7 +39,7 @@
     <script>
         window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
-    <script defer src="/_vercel/insights/script.js"></script>
+    <script src="/_vercel/insights/script.js"></script>
 
     <script>
         tailwind.config = {
@@ -59,7 +59,8 @@
                         'pop': 'pop 0.2s ease-in-out',
                         'slide-down': 'slideDown 0.3s ease-out forwards',
                         'fade-in': 'fadeIn 0.4s ease-out',
-                        'confetti-fall': 'confettiFall 3s ease-out forwards'
+                        'confetti-fall': 'confettiFall 3s ease-out forwards',
+                        'grow-up': 'growUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards'
                     },
                     keyframes: {
                         shake: {
@@ -89,12 +90,17 @@
                         confettiFall: {
                             '0%': { transform: 'translateY(-10vh) rotate(0deg)', opacity: '1' },
                             '100%': { transform: 'translateY(100vh) rotate(720deg)', opacity: '0' }
+                        },
+                        growUp: {
+                            '0%': { height: '0%' },
+                            '100%': { height: 'var(--target-height)' }
                         }
                     }
                 }
             }
         }
-        // Initialize Real Firebase
+        
+        // Initialize Real Firebase with specific user configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBTaCoDH1xA-Qyw4gz_m0WLrt0UMMF2iso",
             authDomain: "cloud-c5271.firebaseapp.com",
@@ -428,11 +434,10 @@
             const diffTime = Math.abs(localNow - localEpoch);
             const dayIndex = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             
-            // Generate all 5 puzzles for the day
             const puzzles = getAllPuzzlesForDay(dayIndex);
             
-            // Randomly select 3 active games for the day
-            const rng = seededRNG(dayIndex + 5000);
+            const rngSeed = dayIndex + 5000;
+            const rng = seededRNG(rngSeed);
             const activeGameTypes = shuffleArray([...GAME_TYPES], rng).slice(0, 3);
 
             return { 
@@ -440,7 +445,8 @@
                 activeGameTypes, 
                 puzzles, 
                 todayStr: localDateStr, 
-                isTestMode: false 
+                isTestMode: false,
+                rngSeed
             };
         };
 
@@ -994,7 +1000,8 @@
                     if (status !== 'playing') return;
                     if (e.ctrlKey || e.metaKey || e.altKey) return;
                     
-                    if (e.key === 'Backspace') { e.preventDefault(); onKeyPress('BACKSPACE'); }
+                    if (e.key === 'Enter') { e.preventDefault(); onKeyPress('ENTER'); }
+                    else if (e.key === 'Backspace') { e.preventDefault(); onKeyPress('BACKSPACE'); }
                     else if (/^[A-Za-z]$/.test(e.key) && e.key.length === 1) { e.preventDefault(); onKeyPress(e.key.toUpperCase()); }
                     else if (e.key === 'ArrowRight' && (activeCell + 1) % size !== 0) setActiveCell(activeCell + 1);
                     else if (e.key === 'ArrowLeft' && activeCell % size !== 0) setActiveCell(activeCell - 1);
@@ -1029,10 +1036,11 @@
 
                 history.forEach((attempt) => {
                     attempt.guess.forEach((letter, i) => {
+                        if (letter === '') return;
                         const evalState = attempt.evaluation[i];
                         if (evalState === 'correct') keyColors[letter] = 'bg-emerald-500 text-white';
                         else if (evalState === 'present' && !keyColors[letter]?.includes('emerald')) keyColors[letter] = 'bg-amber-400 text-white';
-                        else if (evalState === 'absent' && !keyColors[letter]) keyColors[letter] = 'bg-rose-500 text-white border-rose-600 opacity-60';
+                        else if (evalState === 'absent' && !keyColors[letter]) keyColors[letter] = 'bg-rose-500 text-white opacity-60';
                     });
                 });
             }
@@ -1340,6 +1348,24 @@
                                                         <div className="flex flex-col"><span className="text-xl font-bold">{stats.currentStreak}</span><span className="text-[10px] uppercase text-slate-500">Streak</span></div>
                                                         <div className="flex flex-col"><span className="text-xl font-bold">{stats.maxStreak}</span><span className="text-[10px] uppercase text-slate-500">Max</span></div>
                                                     </div>
+                                                    
+                                                    {/* SCORE HISTORY CHART */}
+                                                    {stats.scoreHistory && stats.scoreHistory.length > 0 && (
+                                                        <div className="mt-6 pt-4 border-t border-slate-100">
+                                                            <h3 className="text-xs font-bold uppercase text-slate-400 mb-3 text-center">Score History (Last 5)</h3>
+                                                            <div className="flex items-end justify-center h-20 gap-3">
+                                                                {stats.scoreHistory.map((s, i) => {
+                                                                    const heightPct = Math.max(15, (s / 5000) * 100);
+                                                                    return (
+                                                                        <div key={i} className="flex flex-col items-center gap-1 w-8 group">
+                                                                            <span className="text-[9px] font-bold text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">{s}</span>
+                                                                            <div className="w-full bg-indigo-500 rounded-t-md animate-grow-up shadow-sm hover:bg-indigo-400 transition-colors" style={{ '--target-height': `${heightPct}%` }}></div>
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </>
                                             )}
                                         </div>
@@ -1668,29 +1694,44 @@
             );
         };
 
-        const DEFAULT_STATS = { played: 0, wins: 0, currentStreak: 0, maxStreak: 0, lastScore: 0 };
+        const DEFAULT_STATS = { played: 0, wins: 0, currentStreak: 0, maxStreak: 0, lastScore: 0, scoreHistory: [] };
         const DEFAULT_GLOBAL_STATS = { currentStreak: 0, maxStreak: 0, lastPlayedDate: null };
 
         function App() {
             const [dayParams] = useState(() => getDayParams()); 
             
             const [dailyStates, setDailyStates] = useState(() => {
-                const savedRaw = localStorage.getItem('corpQuestDaily_v7');
+                const initial = {};
+                GAME_TYPES.forEach(type => {
+                    initial[type] = { 
+                        history: [], 
+                        currentGuess: type === 'PROCESS_FLOW' ? [] : 
+                                      type === 'SYNERGY_SQUARE' ? { board: shuffleArray(dayParams.puzzles[type].categories.flatMap(c => c.items), seededRNG(dayParams.rngSeed)), selected: [], solved: [] } : 
+                                      type === 'MINI_CROSSWORD' ? Array(16).fill('') : '', 
+                        status: 'playing' 
+                    };
+                });
+                
+                const savedRaw = localStorage.getItem('corpQuestDaily_v9');
                 if (savedRaw) {
                     try {
                         const parsed = JSON.parse(savedRaw);
-                        if (parsed.date === dayParams.todayStr) return parsed.states;
-                    } catch(e) {}
+                        if (parsed.date === dayParams.todayStr) {
+                            const mergedStates = { ...initial };
+                            Object.keys(parsed.states).forEach(key => {
+                                if (parsed.states[key]) {
+                                    mergedStates[key] = parsed.states[key];
+                                }
+                            });
+                            return mergedStates;
+                        }
+                    } catch(e) { console.error("Corrupted state reset."); }
                 }
-                const initial = {};
-                GAME_TYPES.forEach(type => {
-                    initial[type] = { history: [], currentGuess: type === 'PROCESS_FLOW' ? [] : type === 'SYNERGY_SQUARE' ? { board: shuffleArray(dayParams.puzzles[type].categories.flatMap(c => c.items), seededRNG(dayParams.rngSeed)), selected: [], solved: [] } : type === 'MINI_CROSSWORD' ? Array(16).fill('') : type === 'WORDFLOWER' ? '' : '', status: 'playing' };
-                });
                 return initial;
             });
 
-            const [activeGame, setActiveGame] = useState(null); // null = Hub
-            const [testDriveState, setTestDriveState] = useState(null); // Dedicated state for test drive isolation
+            const [activeGame, setActiveGame] = useState(null); 
+            const [testDriveState, setTestDriveState] = useState(null); 
 
             const [allStats, setAllStats] = useState({});
             const [globalStats, setGlobalStats] = useState(DEFAULT_GLOBAL_STATS);
@@ -1723,21 +1764,19 @@
             }, []);
 
             useEffect(() => {
-                const savedStats = JSON.parse(localStorage.getItem('corpQuestStats_v7')) || {};
+                const savedStats = JSON.parse(localStorage.getItem('corpQuestStats_v9')) || {};
                 setAllStats(savedStats);
                 
-                const savedGlobal = JSON.parse(localStorage.getItem('corpQuestGlobal_v7')) || DEFAULT_GLOBAL_STATS;
+                const savedGlobal = JSON.parse(localStorage.getItem('corpQuestGlobal_v9')) || DEFAULT_GLOBAL_STATS;
                 setGlobalStats(savedGlobal);
             }, []);
 
-            // Save Daily States to local storage
             useEffect(() => {
-                localStorage.setItem('corpQuestDaily_v7', JSON.stringify({
+                localStorage.setItem('corpQuestDaily_v9', JSON.stringify({
                     date: dayParams.todayStr, states: dailyStates
                 }));
             }, [dailyStates, dayParams.todayStr]);
 
-            // Midnight Timer
             useEffect(() => {
                 const timer = setInterval(() => {
                     const now = new Date();
@@ -1761,13 +1800,15 @@
                 }
 
                 const gameType = activeGame;
-                const maxAtt = dayParams.maxAttempts[gameType] || 5;
+                const maxAtt = getGameMaxAttempts(gameType);
                 const timeTakenSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
                 const score = calculateScore(status === 'won', attempts, maxAtt, timeTakenSeconds);
 
-                // Update Individual Game Stats
-                const currentStats = allStats[gameType] || { ...DEFAULT_STATS };
+                const currentStats = allStats[gameType] || { ...DEFAULT_STATS, scoreHistory: [] };
+                
                 const newStats = { ...currentStats, played: currentStats.played + 1, lastScore: score };
+                newStats.scoreHistory = [...(currentStats.scoreHistory || []), score].slice(-5); 
+
                 if (status === 'won') {
                     newStats.wins += 1;
                     newStats.currentStreak += 1;
@@ -1776,9 +1817,8 @@
 
                 const updatedAllStats = { ...allStats, [gameType]: newStats };
                 setAllStats(updatedAllStats);
-                localStorage.setItem('corpQuestStats_v7', JSON.stringify(updatedAllStats));
+                localStorage.setItem('corpQuestStats_v9', JSON.stringify(updatedAllStats));
                 
-                // Update Global Daily Streak
                 let newGlobalStats = { ...globalStats };
                 if (newGlobalStats.lastPlayedDate !== dayParams.todayStr) {
                     const yesterday = new Date();
@@ -1794,7 +1834,7 @@
                     newGlobalStats.maxStreak = Math.max(newGlobalStats.maxStreak, newGlobalStats.currentStreak);
                     
                     setGlobalStats(newGlobalStats);
-                    localStorage.setItem('corpQuestGlobal_v7', JSON.stringify(newGlobalStats));
+                    localStorage.setItem('corpQuestGlobal_v9', JSON.stringify(newGlobalStats));
                 }
 
                 if (auth.currentUser) {
@@ -1812,13 +1852,7 @@
             const handleTestDrive = (type) => {
                 const fakeSeed = Math.floor(Math.random() * 1000000);
                 const puzzleData = window.generatePuzzleData(type, fakeSeed);
-                
-                let maxAttempts = 5;
-                if (type === 'JARGON_BUSTER') maxAttempts = 6;
-                if (type === 'PROCESS_FLOW') maxAttempts = 4;
-                if (type === 'SYNERGY_SQUARE') maxAttempts = 4; 
-                if (type === 'MINI_CROSSWORD') maxAttempts = 10;
-                if (type === 'WORDFLOWER') maxAttempts = 10;
+                const maxAttempts = getGameMaxAttempts(type);
 
                 let initialGuess = '';
                 if (type === 'PROCESS_FLOW') initialGuess = [];
@@ -1894,18 +1928,18 @@
                 setActiveGame(id);
                 setGameStartTime(Date.now());
                 if (dailyStates[id]?.status !== 'playing') {
-                    // Already played, show stats directly
                     setTimeout(() => setShowStats(true), 100);
                 } else if (!allStats[id]) {
-                    // First time playing this specific game mode
                     setShowHelp(true);
                 }
             };
 
             const currentGameType = activeGame === 'TEST_DRIVE' ? testDriveState.gameType : activeGame;
             const currentPuzzle = activeGame === 'TEST_DRIVE' ? testDriveState.puzzle : (activeGame ? dayParams.puzzles[activeGame] : null);
-            const currentMaxAttempts = activeGame === 'TEST_DRIVE' ? testDriveState.maxAttempts : (activeGame ? dayParams.maxAttempts[activeGame] : 5);
-            const currentGameState = activeGame === 'TEST_DRIVE' ? testDriveState.gameState : dailyStates[activeGame];
+            const currentMaxAttempts = activeGame === 'TEST_DRIVE' ? testDriveState.maxAttempts : (activeGame ? getGameMaxAttempts(activeGame) : 5);
+            
+            const fallbackState = { history: [], currentGuess: '', status: 'playing' };
+            const currentGameState = activeGame === 'TEST_DRIVE' ? testDriveState.gameState : (dailyStates[activeGame] || fallbackState);
             
             const updateActiveGameState = (newStateFn) => {
                 if (!activeGame) return;
@@ -1913,7 +1947,7 @@
                     setTestDriveState(prev => ({ ...prev, gameState: typeof newStateFn === 'function' ? newStateFn(prev.gameState) : newStateFn }));
                 } else {
                     setDailyStates(prev => {
-                        const oldState = prev[activeGame];
+                        const oldState = prev[activeGame] || fallbackState;
                         const nextState = typeof newStateFn === 'function' ? newStateFn(oldState) : newStateFn;
                         return { ...prev, [activeGame]: nextState };
                     });
