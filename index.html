@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CorpQuest | Daily Corporate Logic</title>
     
-    <!-- Security Layer: Anti Inspect & Anti Copy -->
     <script>
         document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
         document.onkeydown = function(e) {
@@ -17,25 +16,19 @@
         }
     </script>
 
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- html2canvas for screenshots -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-    <!-- VERCEL WEB ANALYTICS (Native HTML Injection) -->
     <script>
         window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
@@ -438,7 +431,18 @@
             
             const rngSeed = dayIndex + 5000;
             const rng = seededRNG(rngSeed);
-            const activeGameTypes = shuffleArray([...GAME_TYPES], rng).slice(0, 3);
+            let activeGameTypes = shuffleArray([...GAME_TYPES], rng).slice(0, 3);
+
+            // --- OVERRIDE KHUSUS HARI INI ---
+            // Secara eksplisit diatur untuk tanggal hari ini sesuai context sistem: 2026-05-29
+            if (localDateStr === '2026-05-29') {
+                activeGameTypes = ['MINI_CROSSWORD', 'SYNERGY_SQUARE', 'JARGON_BUSTER'];
+                const specificCrossword = CROSSWORD_BANK.find(p => p.target === "COSTOVERSEMITRIM");
+                if (specificCrossword) {
+                    puzzles['MINI_CROSSWORD'] = specificCrossword;
+                }
+            }
+            // --------------------------------
 
             return { 
                 dayIndex, 
