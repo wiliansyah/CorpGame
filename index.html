@@ -39,7 +39,7 @@
     <script>
         window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
-    <script src="/_vercel/insights/script.js"></script>
+    <script defer src="/_vercel/insights/script.js"></script>
 
     <script>
         tailwind.config = {
@@ -95,7 +95,6 @@
             }
         }
 
-        // Initialize Real Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAgZUtc5aZguYz_MW5zISkuLvDgPmDixfg",
             authDomain: "meratus-frd-lms-10276.firebaseapp.com",
@@ -123,6 +122,11 @@
         .crossword-cell:focus { outline: none; box-shadow: inset 0 0 0 3px #6366f1; }
         .crossword-active-word { background-color: #e0e7ff; }
         .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+
+        /* Beautiful Hexagon Mask for Wordflower */
+        .hex-cell {
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
     </style>
 </head>
 <body>
@@ -151,7 +155,8 @@
                 'log-out': <g><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></g>,
                 'google': <g viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" stroke="none"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" stroke="none"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" stroke="none"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" stroke="none"/></g>,
                 'alert-triangle': <g><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></g>,
-                'play': <g><polygon points="5 3 19 12 5 21 5 3"/></g>
+                'play': <g><polygon points="5 3 19 12 5 21 5 3"/></g>,
+                'chevron-left': <g><path d="m15 18-6-6 6-6"/></g>
             };
             
             if (name === 'google') {
@@ -200,18 +205,18 @@
                     };
                 } catch (error) {
                     console.error("Google Auth Error Detail:", error);
-                    let errMsg = "Koneksi ke Google gagal. Coba lagi.";
+                    let errMsg = "Google connection failed. Please try again.";
                     
                     if (error.code === 'auth/unauthorized-domain') {
-                        errMsg = `Domain Error: Tambahkan URL ini ke Firebase Console > Authentication > Settings > Authorized Domains.`;
+                        errMsg = `Domain Error: Add this URL to Firebase Console > Authentication > Settings > Authorized Domains.`;
                     } else if (error.code === 'auth/operation-not-allowed') {
-                        errMsg = "Fitur 'Google Sign-In' belum diaktifkan. Buka Firebase Console > Authentication > Sign-in method > Aktifkan Google.";
+                        errMsg = "'Google Sign-In' is not enabled. Go to Firebase Console > Authentication > Sign-in method > Enable Google.";
                     } else if (error.code === 'auth/popup-blocked') {
-                        errMsg = "Popup diblokir oleh browser Anda. Mohon izinkan popup untuk situs ini.";
+                        errMsg = "Popup blocked by your browser. Please allow popups for this site.";
                     } else if (error.code === 'auth/popup-closed-by-user') {
-                        errMsg = "Proses login dibatalkan sebelum selesai.";
+                        errMsg = "Login process was cancelled.";
                     } else if (error.message) {
-                        errMsg = `Gagal: ${error.message}`;
+                        errMsg = `Failed: ${error.message}`;
                     }
                     throw new Error(errMsg);
                 }
@@ -291,12 +296,12 @@
         ];
 
         const PROCESS_BANK = [
-            { title: "Standard Offboarding", desc: "S.O.P Pengunduran Diri Karyawan", steps: ["Receive Formal Resignation", "Notify IT & Security", "Conduct Exit Interview", "Process Final Pay", "Deactivate Badges"], trivia: "A structured offboarding process reduces the risk of data breaches from former employees by 70%." },
-            { title: "Discipline Escalation", desc: "Tahapan Pendisiplinan Progresif Karyawan", steps: ["Verbal Warning", "Written Warning", "Performance Improvement Plan", "Final Warning", "Termination"], trivia: "Progressive discipline policies protect companies from wrongful termination lawsuits by establishing a documented trail of intervention." },
-            { title: "Expense Reimbursement", desc: "Proses Klaim Biaya Operasional", steps: ["Employee Incurs Expense", "Submit Receipts to System", "Manager Approval", "Finance Audit", "Funds Deposited to Account"], trivia: "Expense fraud costs U.S. businesses over $2.8 billion per year, making structured approvals vital." },
-            { title: "Software Release", desc: "Tahapan Rilis Software Development (SDLC)", steps: ["Write Code", "Code Review (PR)", "QA Testing", "Deploy to Staging", "Push to Production"], trivia: "Implementing a strict QA stage before staging deployment reduces critical bugs in production by 80%." },
-            { title: "Recruitment Pipeline", desc: "Urutan Proses Perekrutan Kandidat Baru", steps: ["Post Job Description", "Screen Resumes", "Initial HR Call", "Technical Interview", "Extend Offer"], trivia: "The average corporate job opening attracts 250 resumes, making initial screening the most time-consuming step." },
-            { title: "Annual Review", desc: "Tahapan Evaluasi Performa Tahunan", steps: ["Self Evaluation", "Peer 360 Feedback", "Manager Assessment", "Calibration Meeting", "1-on-1 Delivery"], trivia: "Companies with regular feedback turnover rates are 14.9% lower than for employees who receive no feedback." }
+            { title: "Standard Offboarding", desc: "Arrange chronological order of resignation.", steps: ["Receive Formal Resignation", "Notify IT & Security", "Conduct Exit Interview", "Process Final Pay", "Deactivate Badges"], trivia: "A structured offboarding process reduces the risk of data breaches from former employees by 70%." },
+            { title: "Discipline Escalation", desc: "Order the stages of progressive discipline.", steps: ["Verbal Warning", "Written Warning", "Performance Improvement Plan", "Final Warning", "Termination"], trivia: "Progressive discipline policies protect companies from wrongful termination lawsuits by establishing a documented trail of intervention." },
+            { title: "Expense Reimbursement", desc: "Order the steps to process an employee expense.", steps: ["Employee Incurs Expense", "Submit Receipts to System", "Manager Approval", "Finance Audit", "Funds Deposited to Account"], trivia: "Expense fraud costs U.S. businesses over $2.8 billion per year, making structured approvals vital." },
+            { title: "Software Release", desc: "Order the steps of a typical SDLC deployment.", steps: ["Write Code", "Code Review (PR)", "QA Testing", "Deploy to Staging", "Push to Production"], trivia: "Implementing a strict QA stage before staging deployment reduces critical bugs in production by 80%." },
+            { title: "Recruitment Pipeline", desc: "Order the hiring process.", steps: ["Post Job Description", "Screen Resumes", "Initial HR Call", "Technical Interview", "Extend Offer"], trivia: "The average corporate job opening attracts 250 resumes, making initial screening the most time-consuming step." },
+            { title: "Annual Review", desc: "Order the steps of performance appraisal.", steps: ["Self Evaluation", "Peer 360 Feedback", "Manager Assessment", "Calibration Meeting", "1-on-1 Delivery"], trivia: "Companies with regular feedback turnover rates are 14.9% lower than for employees who receive no feedback." }
         ];
 
         const CROSSWORD_BANK = [
@@ -340,10 +345,11 @@
             { pangram: "PROJECT", center: "O", letters: ["P", "R", "J", "E", "C", "T", "O"], validWords: ["PROJECT", "PORT", "PORE", "POET", "CROP", "COPE", "CORE", "ROPE"], trivia: "Project management as a modern discipline began in the 1950s." }
         ];
 
-        // ENGINE INTI (Tanpa Talent Grid, Sesuai Permintaan)
-        const GAME_TYPES = ['MINI_CROSSWORD', 'JARGON_BUSTER', 'SYNERGY_SQUARE', 'PROCESS_FLOW', 'WORDFLOWER'];
+        // 5 Core Games
+        const GAME_TYPES = ['MINI_CROSSWORD', 'WORDFLOWER', 'SYNERGY_SQUARE', 'JARGON_BUSTER', 'PROCESS_FLOW'];
 
-        const generatePuzzleData = (gameType, seed) => {
+        // Global Generator exposed to window for Admin sandbox
+        window.generatePuzzleData = (gameType, seed) => {
             const rng = seededRNG(seed); 
             let puzzleData = {};
 
@@ -352,16 +358,13 @@
             }
             else if (gameType === 'PROCESS_FLOW') {
                 const base = pickRandom(PROCESS_BANK, rng);
-                // Assign index asli ke text, lalu acak urutannya agar user tidak bisa menebak
                 const orderedSteps = base.steps.map((text, i) => ({ originalIndex: i, text }));
                 const shuffledSteps = shuffleArray(orderedSteps, rng);
-                // Gunakan label A, B, C, D murni untuk UI display, sedangka 'solution' adalah array label A/B/C mana yang posisinya benar.
                 const displaySteps = shuffledSteps.map((step, i) => ({ 
                     id: String.fromCharCode(65 + i), 
                     text: step.text,
                     originalIndex: step.originalIndex 
                 }));
-                // Solusi adalah urutan Abjad (A, B, dll) yang benar berdasarkan originalIndex-nya
                 const solution = [...displaySteps].sort((a, b) => a.originalIndex - b.originalIndex).map(s => s.id);
 
                 puzzleData = {
@@ -371,7 +374,6 @@
                 };
             }
             else if (gameType === 'SYNERGY_SQUARE') {
-                // NYT Colors for Difficulty
                 const colors = [
                     "bg-[#f9df6d] text-slate-900 border-[#d4bd54]", // Yellow
                     "bg-[#a0c35a] text-white border-[#87a54a]", // Green
@@ -392,35 +394,29 @@
             }
             else if (gameType === 'WORDFLOWER') {
                 puzzleData = pickRandom(WORDFLOWER_BANK, rng);
-                // Extract center letter, and shuffle the other 6 letters
                 const outerLetters = puzzleData.letters.filter(l => l !== puzzleData.center);
                 puzzleData.outerLetters = shuffleArray(outerLetters, rng);
             }
             return puzzleData;
         };
 
-        const getPuzzleDataForIndex = (dayIndex) => {
+        const getAllPuzzlesForDay = (dayIndex) => {
             if (dayIndex < 0) return null;
-            const gameType = GAME_TYPES[dayIndex % GAME_TYPES.length];
-            const rngSeed = dayIndex + 2000; 
-            
-            const puzzleData = generatePuzzleData(gameType, rngSeed);
+            const puzzles = {};
+            GAME_TYPES.forEach((type, idx) => {
+                const rngSeed = dayIndex * 100 + idx; 
+                puzzles[type] = window.generatePuzzleData(type, rngSeed);
+            });
+            return puzzles;
+        };
 
-            let maxAttempts = 5;
-            if (gameType === 'JARGON_BUSTER') maxAttempts = 6;
-            if (gameType === 'PROCESS_FLOW') maxAttempts = 4;
-            if (gameType === 'SYNERGY_SQUARE') maxAttempts = 4; 
-            if (gameType === 'MINI_CROSSWORD') maxAttempts = 10;
-            if (gameType === 'WORDFLOWER') maxAttempts = 10; // Extra attempts for Wordflower spelling
-            
-            const targetDate = new Date(EPOCH_DATE);
-            targetDate.setDate(targetDate.getDate() + dayIndex);
-
-            return { 
-                dayIndex, gameType, puzzleData, maxAttempts,
-                dateStr: targetDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
-                rngSeed
-            };
+        const getGameMaxAttempts = (gameType) => {
+            if (gameType === 'JARGON_BUSTER') return 6;
+            if (gameType === 'PROCESS_FLOW') return 4;
+            if (gameType === 'SYNERGY_SQUARE') return 4; 
+            if (gameType === 'MINI_CROSSWORD') return 10;
+            if (gameType === 'WORDFLOWER') return 10; 
+            return 5;
         };
 
         const getDayParams = () => {
@@ -432,10 +428,17 @@
             const diffTime = Math.abs(localNow - localEpoch);
             const dayIndex = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             
-            const puzzleInstance = getPuzzleDataForIndex(dayIndex);
+            // Generate all 5 puzzles for the day
+            const puzzles = getAllPuzzlesForDay(dayIndex);
+            
+            // Randomly select 3 active games for the day
+            const rng = seededRNG(dayIndex + 5000);
+            const activeGameTypes = shuffleArray([...GAME_TYPES], rng).slice(0, 3);
 
             return { 
-                ...puzzleInstance,
+                dayIndex, 
+                activeGameTypes, 
+                puzzles, 
                 todayStr: localDateStr, 
                 isTestMode: false 
             };
@@ -769,17 +772,17 @@
                 
                 if (key === 'ENTER') {
                     if (currentGuess.length < 4) {
-                        triggerToast("Kata minimal 4 huruf.", true);
+                        triggerToast("Word must be at least 4 letters.", true);
                         setIsShaking(true); setTimeout(() => setIsShaking(false), 500);
                         return;
                     }
                     if (!currentGuess.includes(puzzle.center)) {
-                        triggerToast("Harus mengandung huruf tengah.", true);
+                        triggerToast("Must include the center letter.", true);
                         setIsShaking(true); setTimeout(() => setIsShaking(false), 500);
                         return;
                     }
                     if (foundWords.includes(currentGuess)) {
-                        triggerToast("Sudah ditebak!", true);
+                        triggerToast("Already found!", true);
                         setIsShaking(true); setTimeout(() => setIsShaking(false), 500);
                         setCurrentGuess("");
                         return;
@@ -800,7 +803,7 @@
                     setCurrentGuess("");
 
                     if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
-                    else if (isValid) triggerToast("Kerja bagus!", false);
+                    else if (isValid) triggerToast("Great job!", false);
                     else { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); }
 
                 } else if (key === 'BACKSPACE') {
@@ -824,13 +827,15 @@
                 return () => window.removeEventListener('keydown', handleKeyDown);
             }, [onKeyPress, status, puzzle]);
 
+            // Hexagon layout math
+            const R = 75; // radius in pixels
             const petalPositions = [
-                "top-[5%] left-1/2 -translate-x-1/2", 
-                "top-[25%] right-[10%]", 
-                "bottom-[25%] right-[10%]", 
-                "bottom-[5%] left-1/2 -translate-x-1/2", 
-                "bottom-[25%] left-[10%]", 
-                "top-[25%] left-[10%]"
+                { x: 0, y: -R }, // top
+                { x: R * 0.866, y: -R * 0.5 }, // top right
+                { x: R * 0.866, y: R * 0.5 }, // bottom right
+                { x: 0, y: R }, // bottom
+                { x: -R * 0.866, y: R * 0.5 }, // bottom left
+                { x: -R * 0.866, y: -R * 0.5 }, // top left
             ];
 
             const sortedValidHistory = history.filter(h => h.status !== 'invalid').sort((a,b) => b.guess.length - a.guess.length);
@@ -839,7 +844,7 @@
                 <div className="flex flex-col h-full animate-fade-in">
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 text-center">
                         <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Target</span>
-                        <p className="text-slate-800 font-semibold mt-1 text-sm">Temukan PANGRAM korporat (7 huruf).</p>
+                        <p className="text-slate-800 font-semibold mt-1 text-sm">Find the corporate PANGRAM (7 letters) to win.</p>
                     </div>
                     
                     <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full relative mb-4">
@@ -848,12 +853,22 @@
                         </div>
 
                         {status === 'playing' ? (
-                            <div className="relative w-64 h-64 mx-auto">
-                                <button onClick={() => onKeyPress(puzzle.center)} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-amber-300 text-amber-900 rounded-full flex items-center justify-center text-3xl font-extrabold shadow-md active:scale-95 transition-transform z-20">
+                            <div className="relative w-72 h-72 mx-auto flex items-center justify-center">
+                                {/* Center Petal */}
+                                <button 
+                                    onClick={() => onKeyPress(puzzle.center)} 
+                                    className="absolute w-24 h-24 hex-cell bg-amber-400 text-slate-900 flex items-center justify-center text-3xl font-extrabold active:scale-95 transition-transform z-20"
+                                >
                                     {puzzle.center}
                                 </button>
+                                {/* Outer Petals */}
                                 {puzzle.outerLetters.map((letter, idx) => (
-                                    <button key={idx} onClick={() => onKeyPress(letter)} className={`absolute ${petalPositions[idx]} w-16 h-16 bg-slate-200 text-slate-700 rounded-full flex items-center justify-center text-2xl font-bold shadow active:scale-95 transition-transform hover:bg-slate-300 z-10`}>
+                                    <button 
+                                        key={idx} 
+                                        onClick={() => onKeyPress(letter)} 
+                                        className="absolute w-24 h-24 hex-cell bg-slate-200 text-slate-700 flex items-center justify-center text-2xl font-bold active:scale-95 transition-transform hover:bg-slate-300 z-10"
+                                        style={{ transform: `translate(${petalPositions[idx].x}px, ${petalPositions[idx].y}px)` }}
+                                    >
                                         {letter}
                                     </button>
                                 ))}
@@ -925,6 +940,21 @@
                 else setActiveCell(idx);
             };
 
+            const submitGrid = useCallback(() => {
+                if (grid.includes('')) { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); return; }
+                
+                const evaluation = evaluateAttempt(grid, target.split(''));
+                const newHistory = [...history, { guess: [...grid], evaluation }];
+                
+                let newStatus = 'playing';
+                if (evaluation.every(e => e === 'correct')) newStatus = 'won';
+                else if (newHistory.length >= maxAttempts) newStatus = 'lost';
+                
+                setGameState(prev => ({ ...prev, history: newHistory, status: newStatus }));
+                if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
+                else { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); }
+            }, [grid, target, history, maxAttempts, setGameState, onGameOver]);
+
             const onKeyPress = useCallback((key) => {
                 if (status !== 'playing') return;
                 
@@ -957,30 +987,14 @@
                     if (direction === 'across' && (activeCell + 1) % size !== 0) setActiveCell(activeCell + 1);
                     else if (direction === 'down' && activeCell + size < size * size) setActiveCell(activeCell + size);
                 }
-            }, [activeCell, direction, grid, status, size, setGameState]);
-
-            const submitGrid = useCallback(() => {
-                if (grid.includes('')) { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); return; }
-                
-                const evaluation = evaluateAttempt(grid, target.split(''));
-                const newHistory = [...history, { guess: [...grid], evaluation }];
-                
-                let newStatus = 'playing';
-                if (evaluation.every(e => e === 'correct')) newStatus = 'won';
-                else if (newHistory.length >= maxAttempts) newStatus = 'lost';
-                
-                setGameState(prev => ({ ...prev, history: newHistory, status: newStatus }));
-                if (newStatus !== 'playing') onGameOver(newStatus, newHistory.length);
-                else { setIsShaking(true); setTimeout(() => setIsShaking(false), 500); }
-            }, [grid, target, history, maxAttempts, setGameState, onGameOver]);
+            }, [activeCell, direction, grid, status, size, setGameState, submitGrid]);
 
             useEffect(() => {
                 const handleKeyDown = (e) => {
                     if (status !== 'playing') return;
                     if (e.ctrlKey || e.metaKey || e.altKey) return;
                     
-                    if (e.key === 'Enter') { e.preventDefault(); onKeyPress('ENTER'); }
-                    else if (e.key === 'Backspace') { e.preventDefault(); onKeyPress('BACKSPACE'); }
+                    if (e.key === 'Backspace') { e.preventDefault(); onKeyPress('BACKSPACE'); }
                     else if (/^[A-Za-z]$/.test(e.key) && e.key.length === 1) { e.preventDefault(); onKeyPress(e.key.toUpperCase()); }
                     else if (e.key === 'ArrowRight' && (activeCell + 1) % size !== 0) setActiveCell(activeCell + 1);
                     else if (e.key === 'ArrowLeft' && activeCell % size !== 0) setActiveCell(activeCell - 1);
@@ -1103,8 +1117,8 @@
                 return (
                     <div className="mt-4 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-center animate-fade-in" data-html2canvas-ignore>
                         <Icon name="check-circle-2" className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
-                        <p className="text-sm font-bold text-emerald-800">Terima kasih atas masukannya!</p>
-                        <p className="text-xs text-emerald-600 mt-1">Saran Anda membantu kami berkembang.</p>
+                        <p className="text-sm font-bold text-emerald-800">Thank you for your feedback!</p>
+                        <p className="text-xs text-emerald-600 mt-1">Your suggestions help us improve.</p>
                     </div>
                 );
             }
@@ -1121,8 +1135,8 @@
                     </div>
                     {rating > 0 && (
                         <div className="flex flex-col gap-2 animate-slide-down">
-                            <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Punya saran untuk game hari ini? (Opsional)" className="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-indigo-500 focus:bg-white transition-colors resize-none h-20"/>
-                            <button onClick={() => setSubmitted(true)} className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform">Kirim Feedback</button>
+                            <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Any suggestions for today's puzzle? (Optional)" className="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-indigo-500 focus:bg-white transition-colors resize-none h-20"/>
+                            <button onClick={() => setSubmitted(true)} className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform">Submit Feedback</button>
                         </div>
                     )}
                 </div>
@@ -1205,49 +1219,49 @@
                 switch(type) {
                     case 'WORDFLOWER': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-amber-400" text="Temukan PANGRAM korporat (7 huruf) untuk memenangkan game." />
-                            <HowToCard num="2" colorCls="bg-indigo-500" text="Rangkai kata minimal 4 huruf. Anda WAJIB menggunakan huruf yang ada di tengah (kuning)." />
-                            <HowToCard icon={<Icon name="alert-triangle" className="w-4 h-4"/>} colorCls="bg-rose-500" text="Pilih kata dengan hati-hati! Kata yang salah akan mengurangi kesempatan Anda." />
+                            <HowToCard num="1" colorCls="bg-amber-400" text="Find the corporate PANGRAM (7 letters) to instantly win the game." />
+                            <HowToCard num="2" colorCls="bg-indigo-500" text="Create words of at least 4 letters. You MUST use the center letter (yellow) in every word." />
+                            <HowToCard icon={<Icon name="alert-triangle" className="w-4 h-4"/>} colorCls="bg-rose-500" text="Choose carefully! Submitting invalid words will consume your attempts." />
                         </div>
                     );
                     case 'JARGON_BUSTER': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="Baca definisi untuk menebak buzzword (istilah) korporat." />
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Read the definition to guess the 5-letter corporate buzzword." />
                             <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
-                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Panduan Warna</p>
-                                <LegendCard color="bg-emerald-500" label="Hijau" desc="Huruf benar dan posisinya tepat." />
-                                <LegendCard color="bg-amber-400" label="Kuning" desc="Huruf benar tapi posisinya salah." />
-                                <LegendCard color="bg-rose-500" label="Merah" desc="Huruf sama sekali tidak ada di kata tersebut." />
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
+                                <LegendCard color="bg-emerald-500" label="Green" desc="Letter is in the word and in the correct spot." />
+                                <LegendCard color="bg-amber-400" label="Yellow" desc="Letter is in the word but in the wrong spot." />
+                                <LegendCard color="bg-rose-500" label="Red" desc="Letter is absolutely not in the word." />
                             </div>
                         </div>
                     );
                     case 'PROCESS_FLOW': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="S.O.P itu penting! Susun langkah-langkah ini sesuai urutan kronologis yang benar." />
-                            <HowToCard num="2" colorCls="bg-indigo-400" text="Tekan langkah-langkah di bawah untuk membangun urutan Anda, lalu evaluasi." />
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Standard Operating Procedures matter! Build the correct chronological sequence." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Tap the steps in order. Evaluate your sequence to get feedback." />
                             <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
-                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Panduan Warna</p>
-                                <LegendCard color="bg-emerald-500" label="Hijau" desc="Langkah berada di urutan yang tepat." />
-                                <LegendCard color="bg-amber-400" label="Kuning" desc="Langkah merupakan bagian dari proses, tapi urutannya salah." />
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
+                                <LegendCard color="bg-emerald-500" label="Green" desc="Step is in the exact right order." />
+                                <LegendCard color="bg-amber-400" label="Yellow" desc="Step belongs to the process but is in the wrong order." />
                             </div>
                         </div>
                     );
                     case 'SYNERGY_SQUARE': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="Temukan 4 kelompok kata yang memiliki kesamaan tema korporat." />
-                            <HowToCard num="2" colorCls="bg-indigo-400" text="Pilih 4 kotak dan tekan 'Submit' untuk mengecek kebenaran koneksinya." />
-                            <HowToCard icon={<Icon name="alert-triangle" className="w-4 h-4"/>} colorCls="bg-rose-500" text="Hati-hati! Anda hanya punya jatah 4 kali salah sebelum game berakhir." />
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Find groups of 4 items that share a common corporate theme." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Select 4 tiles and tap 'Submit' to check if your connection is right." />
+                            <HowToCard icon={<Icon name="alert-triangle" className="w-4 h-4"/>} colorCls="bg-rose-500" text="Be careful! You only have 4 mistakes allowed before the game ends." />
                         </div>
                     );
                     case 'MINI_CROSSWORD': return (
                         <div className="space-y-1">
-                            <HowToCard num="1" colorCls="bg-indigo-500" text="Selesaikan teka-teki silang korporat 4x4 ini." />
-                            <HowToCard num="2" colorCls="bg-indigo-400" text="Pilih kotak untuk mengetik. Tekan baris petunjuk yang aktif untuk mengubah arah ketikan." />
+                            <HowToCard num="1" colorCls="bg-indigo-500" text="Solve the 4x4 corporate crossword puzzle." />
+                            <HowToCard num="2" colorCls="bg-indigo-400" text="Tap a cell to type, use on-screen keyboard to fill words. Tap current clue to switch direction." />
                             <div className="mt-4 p-3 bg-white border border-slate-200 rounded-xl">
-                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Panduan Warna</p>
-                                <LegendCard color="bg-emerald-500" label="Hijau" desc="Huruf benar di posisi yang benar." />
-                                <LegendCard color="bg-amber-400" label="Kuning" desc="Huruf ada di grid, tapi salah kotak." />
-                                <LegendCard color="bg-rose-500" label="Merah" desc="Huruf sama sekali salah." />
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-2">Color Guide</p>
+                                <LegendCard color="bg-emerald-500" label="Green" desc="Letter is in the exact correct spot in the grid." />
+                                <LegendCard color="bg-amber-400" label="Yellow" desc="Letter exists in the grid, but not in this spot." />
+                                <LegendCard color="bg-rose-500" label="Red" desc="Letter is completely wrong." />
                             </div>
                         </div>
                     );
@@ -1286,7 +1300,7 @@
                                 </div>
 
                                 {activeTab === 'personal' && (
-                                    <div className="flex flex-col">
+                                    <>
                                         <div id="capture-node" className="p-6 bg-white relative">
                                             <div className="text-center mb-6 border-b border-slate-100 pb-4">
                                                 <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">CorpQuest</h1>
@@ -1299,7 +1313,7 @@
                                                     <h2 className="text-2xl font-bold text-slate-900 mb-1">{gameStatus === 'won' ? 'Excellent Work!' : 'Tough Luck.'}</h2>
                                                     {gameStatus === 'won' && !isTestMode && (
                                                         <div className="text-sm font-bold text-emerald-600 bg-emerald-50 py-1 px-3 rounded-full inline-block mt-2 border border-emerald-100 shadow-sm">
-                                                            Score: {stats?.lastScore || 0} pts
+                                                            Score: {stats.lastScore || 0} pts
                                                         </div>
                                                     )}
                                                 </div>
@@ -1321,10 +1335,10 @@
                                                 <>
                                                     <h3 className="text-sm font-bold uppercase text-slate-400 mb-4 text-center">{GameTitle} Stats</h3>
                                                     <div className="grid grid-cols-4 gap-2 text-center">
-                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats?.played || 0}</span><span className="text-[10px] uppercase text-slate-500">Played</span></div>
-                                                        <div className="flex flex-col"><span className="text-xl font-bold">{(stats?.played || 0) > 0 ? Math.round(((stats?.wins || 0)/(stats?.played || 1))*100) : 0}</span><span className="text-[10px] uppercase text-slate-500">Win %</span></div>
-                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats?.currentStreak || 0}</span><span className="text-[10px] uppercase text-slate-500">Streak</span></div>
-                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats?.maxStreak || 0}</span><span className="text-[10px] uppercase text-slate-500">Max</span></div>
+                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats.played}</span><span className="text-[10px] uppercase text-slate-500">Played</span></div>
+                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats.played > 0 ? Math.round((stats.wins/stats.played)*100) : 0}</span><span className="text-[10px] uppercase text-slate-500">Win %</span></div>
+                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats.currentStreak}</span><span className="text-[10px] uppercase text-slate-500">Streak</span></div>
+                                                        <div className="flex flex-col"><span className="text-xl font-bold">{stats.maxStreak}</span><span className="text-[10px] uppercase text-slate-500">Max</span></div>
                                                     </div>
                                                 </>
                                             )}
@@ -1344,7 +1358,7 @@
                                                                 <Icon name="instagram" className="w-4 h-4" /> IG Story
                                                             </button>
                                                         </div>
-                                                        <button onClick={() => setShareImage(null)} className="w-full text-xs text-slate-500 mt-2 font-bold py-2 hover:text-slate-800">Batalkan</button>
+                                                        <button onClick={() => setShareImage(null)} className="w-full text-xs text-slate-500 mt-2 font-bold py-2 hover:text-slate-800">Cancel</button>
                                                     </div>
                                                 ) : (
                                                     <div className="flex flex-col">
@@ -1368,7 +1382,7 @@
                                                 )}
                                             </div>
                                         )}
-                                    </div>
+                                    </>
                                 )}
 
                                 {activeTab === 'global' && !isTestMode && (
@@ -1454,75 +1468,103 @@
             );
 
             try {
-                const activeData = activeTab !== 'test' ? getPuzzleDataForIndex(currentDayIndex + activeTab) : null;
+                let activePuzzles = null;
+                let activeTypesForDay = [];
+                let targetDateStr = '';
+
+                if (activeTab !== 'test') {
+                    const targetDayIndex = currentDayIndex + activeTab;
+                    activePuzzles = getAllPuzzlesForDay(targetDayIndex);
+                    
+                    const rng = seededRNG(targetDayIndex + 5000);
+                    activeTypesForDay = shuffleArray([...GAME_TYPES], rng).slice(0, 3);
+                    
+                    const targetDate = new Date(EPOCH_DATE);
+                    targetDate.setDate(targetDate.getDate() + targetDayIndex);
+                    targetDateStr = targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                }
 
                 const renderSolution = () => {
                     if (activeTab === 'test') return renderTestDrive();
-                    if (!activeData || !activeData.puzzleData) return <div className="p-8 text-center text-slate-500">No puzzle scheduled.</div>;
+                    if (!activePuzzles) return <div className="p-8 text-center text-slate-500">No puzzle scheduled.</div>;
                     
-                    const { gameType, puzzleData } = activeData;
-
-                    if (gameType === 'JARGON_BUSTER') return (<div className="text-center p-4"><p className="text-sm italic mb-4">"{puzzleData.clue}"</p><p className="text-3xl font-bold tracking-[0.2em] text-emerald-600">{puzzleData.word}</p></div>);
-                    if (gameType === 'PROCESS_FLOW') return (
-                        <div className="space-y-2">
-                            {puzzleData.solution?.map((stepId, idx) => (
-                                <div key={stepId} className="flex gap-3 items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100"><span className="w-6 h-6 rounded bg-emerald-200 text-emerald-800 flex items-center justify-center text-xs font-bold">{idx + 1}</span><span className="text-xs font-semibold text-emerald-900">{puzzleData.steps.find(s => s.id === stepId)?.text}</span></div>
-                            ))}
+                    return (
+                        <div className="space-y-4">
+                            {GAME_TYPES.map(gameType => {
+                                const puzzleData = activePuzzles[gameType];
+                                const isActive = activeTypesForDay.includes(gameType);
+                                
+                                let content = null;
+                                if (gameType === 'JARGON_BUSTER') content = (<div className="text-center p-3"><p className="text-xs italic mb-2">"{puzzleData.clue}"</p><p className="text-xl font-bold tracking-[0.2em] text-emerald-600">{puzzleData.word}</p></div>);
+                                else if (gameType === 'PROCESS_FLOW') content = (
+                                    <div className="space-y-1 mt-2">
+                                        {puzzleData.solution?.map((stepId, idx) => (
+                                            <div key={stepId} className="flex gap-2 items-center bg-emerald-50 p-2 rounded border border-emerald-100"><span className="w-5 h-5 rounded bg-emerald-200 text-emerald-800 flex items-center justify-center text-[10px] font-bold">{idx + 1}</span><span className="text-[10px] font-semibold text-emerald-900">{puzzleData.steps.find(s => s.id === stepId)?.text}</span></div>
+                                        ))}
+                                    </div>
+                                );
+                                else if (gameType === 'SYNERGY_SQUARE') content = (
+                                    <div className="flex flex-col gap-1 mt-2">
+                                        {puzzleData.categories?.map((cat, i) => (
+                                            <div key={i} className="p-2 bg-emerald-50 border border-emerald-100 rounded text-center">
+                                                <p className="text-[10px] font-bold text-emerald-700 uppercase mb-1">{cat.title}</p>
+                                                <p className="text-[10px] font-medium text-emerald-900">{cat.items.join(', ')}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                                else if (gameType === 'MINI_CROSSWORD') content = (
+                                    <div className="p-2 bg-emerald-50 rounded border border-emerald-200 text-center mt-2">
+                                        <p className="text-[10px] text-emerald-600 font-bold uppercase mb-1">Completed Grid String</p>
+                                        <p className="text-xs font-mono font-bold tracking-widest text-emerald-900 break-all">{puzzleData.target}</p>
+                                    </div>
+                                );
+                                else if (gameType === 'WORDFLOWER') content = (
+                                    <div className="p-2 bg-emerald-50 rounded border border-emerald-200 text-center mt-2">
+                                        <p className="text-[10px] text-emerald-600 font-bold uppercase mb-1">Pangram</p>
+                                        <p className="text-sm font-black tracking-widest text-emerald-900 mb-2">{puzzleData.pangram}</p>
+                                        <div className="flex flex-wrap gap-1 justify-center">
+                                            {puzzleData.validWords.map(w => <span key={w} className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded text-[9px] font-bold">{w}</span>)}
+                                        </div>
+                                    </div>
+                                );
+                                
+                                return (
+                                    <div key={gameType} className={`p-3 rounded-xl border-2 ${isActive ? 'border-indigo-200 bg-white shadow-sm' : 'border-slate-100 bg-slate-50 opacity-60'}`}>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <h4 className="font-bold text-slate-800 text-xs">{gameType.replace('_', ' ')}</h4>
+                                            {isActive ? <span className="text-[8px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase">Active</span> : <span className="text-[8px] font-bold bg-slate-200 text-slate-500 px-2 py-0.5 rounded uppercase">Locked</span>}
+                                        </div>
+                                        {content}
+                                    </div>
+                                );
+                            })}
                         </div>
                     );
-                    if (gameType === 'SYNERGY_SQUARE') return (
-                        <div className="flex flex-col gap-2">
-                            {puzzleData.categories?.map((cat, i) => (
-                                <div key={i} className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-center">
-                                    <p className="text-xs font-bold text-emerald-700 uppercase mb-1">{cat.title}</p>
-                                    <p className="text-sm font-medium text-emerald-900">{cat.items.join(', ')}</p>
-                                </div>
-                            ))}
-                        </div>
-                    );
-                    if (gameType === 'MINI_CROSSWORD') return (
-                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
-                            <p className="text-xs text-emerald-600 font-bold uppercase mb-2">Completed Grid String</p>
-                            <p className="text-lg font-mono font-bold tracking-widest text-emerald-900 break-all">{puzzleData.target}</p>
-                        </div>
-                    );
-                    if (gameType === 'WORDFLOWER') return (
-                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
-                            <p className="text-xs text-emerald-600 font-bold uppercase mb-2">Pangram</p>
-                            <p className="text-2xl font-black tracking-widest text-emerald-900 mb-4">{puzzleData.pangram}</p>
-                            <p className="text-xs text-emerald-600 font-bold uppercase mb-2">Valid Combinations</p>
-                            <div className="flex flex-wrap gap-1 justify-center">
-                                {puzzleData.validWords.map(w => <span key={w} className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">{w}</span>)}
-                            </div>
-                        </div>
-                    );
-                    
-                    return null;
                 };
 
                 return (
                     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
                         <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden">
-                            <div className="bg-slate-900 p-5 flex justify-between items-center text-white">
+                            <div className="bg-slate-900 p-5 flex justify-between items-center text-white shrink-0">
                                 <div className="flex items-center gap-3">
                                     <Icon name="shield" className="w-5 h-5 text-indigo-400" />
                                     <div><h2 className="font-bold leading-tight">Admin Portal</h2><p className="text-[10px] text-slate-400 font-medium tracking-wide">PUZZLE DATA & TOOLS</p></div>
                                 </div>
                                 <button onClick={onClose} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full"><Icon name="x" className="w-4 h-4" /></button>
                             </div>
-                            <div className="flex p-2 bg-slate-50 border-b border-slate-200 overflow-x-auto hide-scrollbar">
+                            <div className="flex p-2 bg-slate-50 border-b border-slate-200 shrink-0 overflow-x-auto hide-scrollbar">
                                 {tabs.map(tab => (
                                     <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 min-w-[80px] py-2.5 px-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-indigo-700 shadow border border-slate-100' : 'text-slate-500 hover:bg-slate-100'}`}>{tab.label}</button>
                                 ))}
                             </div>
-                            <div className="p-6 overflow-y-auto hide-scrollbar flex-1 bg-white">
-                                {activeData && activeTab !== 'test' && (
-                                    <div className="mb-5 flex justify-between items-end border-b border-slate-100 pb-4">
+                            <div className="p-6 overflow-y-auto hide-scrollbar flex-1 bg-slate-50">
+                                {activeTab !== 'test' && (
+                                    <div className="mb-4 flex justify-between items-end border-b border-slate-200 pb-3">
                                         <div>
-                                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">{activeData.gameType?.replace('_', ' ')}</div>
-                                            <div className="text-lg font-bold text-slate-800 leading-none">{activeData.dateStr}</div>
+                                            <div className="text-sm font-bold text-slate-800 leading-none">{targetDateStr}</div>
                                         </div>
-                                        <div className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">Day #{Number(activeData.dayIndex) + 1}</div>
+                                        <div className="text-[10px] font-bold text-slate-500 bg-slate-200 px-2 py-1 rounded-md">Day #{currentDayIndex + activeTab + 1}</div>
                                     </div>
                                 )}
                                 {renderSolution()}
@@ -1537,7 +1579,7 @@
                         <div className="bg-white p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
                             <Icon name="alert-triangle" className="w-12 h-12 text-rose-500 mx-auto mb-3" />
                             <h2 className="text-xl font-bold text-slate-900 mb-2">Admin Data Error</h2>
-                            <p className="text-slate-500 text-sm mb-6">Failed to load the puzzle data for this date. The structure might be incomplete.</p>
+                            <p className="text-slate-500 text-sm mb-6">Failed to load the puzzle data. Please try again.</p>
                             <button onClick={onClose} className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold">Close Admin Panel</button>
                         </div>
                     </div>
@@ -1545,12 +1587,113 @@
             }
         };
 
+        const Dashboard = ({ dailyStates, activeGameTypes, onSelectGame, globalStats }) => {
+            const gameInfo = {
+                'MINI_CROSSWORD': { title: "Corporate Crossword", desc: "4x4 daily business grid", icon: "bar-chart-2" },
+                'WORDFLOWER': { title: "Wordflower", desc: "Find the 7-letter corporate pangram", icon: "star" },
+                'SYNERGY_SQUARE': { title: "Synergy Square", desc: "Group 4 related business concepts", icon: "help-circle" },
+                'JARGON_BUSTER': { title: "Jargon Buster", desc: "Guess the 5-letter office buzzword", icon: "lightbulb" },
+                'PROCESS_FLOW': { title: "Process Flow", desc: "Sequence standard operating procedures", icon: "play" }
+            };
+
+            const completedCount = activeGameTypes.filter(id => dailyStates[id]?.status === 'won').length;
+
+            return (
+                <div className="flex flex-col h-full animate-fade-in pb-8">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-900">Today's Hub</h2>
+                            <p className="text-sm text-slate-500 mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="text-center">
+                                <div className="text-2xl font-black text-indigo-600">{completedCount}<span className="text-slate-300 text-lg">/3</span></div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Solved</div>
+                            </div>
+                            <div className="w-px bg-slate-200"></div>
+                            <div className="text-center">
+                                <div className="text-2xl font-black text-amber-500 flex items-center justify-center gap-0.5"><span className="text-lg">🔥</span>{globalStats.currentStreak}</div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Streak</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                        {GAME_TYPES.map(gameId => {
+                            const info = gameInfo[gameId];
+                            const isActive = activeGameTypes.includes(gameId);
+                            const state = dailyStates[gameId];
+                            const status = state?.status || 'playing';
+                            const isPlayed = state?.history?.length > 0;
+                            
+                            if (!isActive) {
+                                return (
+                                    <div key={gameId} className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 flex items-center gap-4 opacity-60 grayscale">
+                                        <div className="w-12 h-12 rounded-xl bg-slate-200 text-slate-400 flex items-center justify-center shrink-0">
+                                            <Icon name="lock" className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-slate-700">{info.title}</h3>
+                                            <p className="text-xs text-slate-500 font-medium">Locked for today</p>
+                                        </div>
+                                    </div>
+                                )
+                            }
+
+                            return (
+                                <div key={gameId} onClick={() => onSelectGame(gameId)} className={`bg-white p-4 rounded-2xl border-2 flex items-center gap-4 cursor-pointer transition-all active:scale-95 shadow-sm hover:shadow-md ${status === 'won' ? 'border-emerald-400 bg-emerald-50/30' : status === 'lost' ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200 hover:border-indigo-400'}`}>
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${status === 'won' ? 'bg-emerald-100 text-emerald-600' : status === 'lost' ? 'bg-rose-100 text-rose-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                                        <Icon name={status === 'won' ? "check-circle-2" : status === 'lost' ? "x" : info.icon} className="w-6 h-6" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-slate-900">{info.title}</h3>
+                                        <p className="text-xs text-slate-500 font-medium">{info.desc}</p>
+                                    </div>
+                                    <div className="shrink-0 pl-2">
+                                        {status === 'won' ? (
+                                            <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-full">Solved</span>
+                                        ) : status === 'lost' ? (
+                                            <span className="text-xs font-bold text-rose-600 bg-rose-100 px-2.5 py-1 rounded-full">Failed</span>
+                                        ) : isPlayed ? (
+                                            <span className="text-xs font-bold text-amber-600 bg-amber-100 px-2.5 py-1 rounded-full">In Progress</span>
+                                        ) : (
+                                            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">Play</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
         const DEFAULT_STATS = { played: 0, wins: 0, currentStreak: 0, maxStreak: 0, lastScore: 0 };
+        const DEFAULT_GLOBAL_STATS = { currentStreak: 0, maxStreak: 0, lastPlayedDate: null };
 
         function App() {
-            const [params, setParams] = useState(getDayParams());
-            const [gameState, setGameState] = useState({ history: [], currentGuess: null, status: 'playing' });
+            const [dayParams] = useState(() => getDayParams()); 
+            
+            const [dailyStates, setDailyStates] = useState(() => {
+                const savedRaw = localStorage.getItem('corpQuestDaily_v7');
+                if (savedRaw) {
+                    try {
+                        const parsed = JSON.parse(savedRaw);
+                        if (parsed.date === dayParams.todayStr) return parsed.states;
+                    } catch(e) {}
+                }
+                const initial = {};
+                GAME_TYPES.forEach(type => {
+                    initial[type] = { history: [], currentGuess: type === 'PROCESS_FLOW' ? [] : type === 'SYNERGY_SQUARE' ? { board: shuffleArray(dayParams.puzzles[type].categories.flatMap(c => c.items), seededRNG(dayParams.rngSeed)), selected: [], solved: [] } : type === 'MINI_CROSSWORD' ? Array(16).fill('') : type === 'WORDFLOWER' ? '' : '', status: 'playing' };
+                });
+                return initial;
+            });
+
+            const [activeGame, setActiveGame] = useState(null); // null = Hub
+            const [testDriveState, setTestDriveState] = useState(null); // Dedicated state for test drive isolation
+
             const [allStats, setAllStats] = useState({});
+            const [globalStats, setGlobalStats] = useState(DEFAULT_GLOBAL_STATS);
             
             const [currentUser, setCurrentUser] = useState(null);
             const [gameStartTime, setGameStartTime] = useState(Date.now());
@@ -1579,54 +1722,20 @@
                 return () => unsubscribe();
             }, []);
 
-            // Initialize Game State
             useEffect(() => {
-                if (params.isTestMode) return; 
-
-                const savedStats = JSON.parse(localStorage.getItem('corpQuestStats_v6')) || {};
+                const savedStats = JSON.parse(localStorage.getItem('corpQuestStats_v7')) || {};
                 setAllStats(savedStats);
-
-                let loadedState = false;
-                const savedStateRaw = localStorage.getItem('corpQuestState_v6');
-                if (savedStateRaw) {
-                    try {
-                        const parsed = JSON.parse(savedStateRaw);
-                        if (parsed.date === params.todayStr && parsed.gameType === params.gameType) {
-                            setGameState(parsed.gameState);
-                            loadedState = true;
-                        }
-                    } catch (e) { console.error("Corrupt local storage data, starting fresh."); }
-                }
                 
-                if (!loadedState) {
-                    let initialGuess = '';
-                    if (params.gameType === 'PROCESS_FLOW') {
-                        initialGuess = [];
-                    } else if (params.gameType === 'SYNERGY_SQUARE') {
-                        const rng = seededRNG(params.rngSeed);
-                        const allItems = params.puzzleData.categories.flatMap(c => c.items);
-                        initialGuess = { board: shuffleArray(allItems, rng), selected: [], solved: [] };
-                    } else if (params.gameType === 'MINI_CROSSWORD') {
-                        initialGuess = Array(16).fill('');
-                    } else if (params.gameType === 'WORDFLOWER') {
-                        initialGuess = '';
-                    }
-                    
-                    setGameState({ history: [], currentGuess: initialGuess, status: 'playing' });
-                    setGameStartTime(Date.now()); 
-                    
-                    if (!savedStats[params.gameType]) setShowHelp(true);
-                }
-            }, [params.todayStr, params.gameType, params.isTestMode, params.puzzleData, params.rngSeed]);
+                const savedGlobal = JSON.parse(localStorage.getItem('corpQuestGlobal_v7')) || DEFAULT_GLOBAL_STATS;
+                setGlobalStats(savedGlobal);
+            }, []);
 
-            // Save Game State
+            // Save Daily States to local storage
             useEffect(() => {
-                if (!params.isTestMode && (gameState.history.length > 0 || gameState.status !== 'playing')) {
-                    localStorage.setItem('corpQuestState_v6', JSON.stringify({
-                        date: params.todayStr, gameType: params.gameType, gameState
-                    }));
-                }
-            }, [gameState, params]);
+                localStorage.setItem('corpQuestDaily_v7', JSON.stringify({
+                    date: dayParams.todayStr, states: dailyStates
+                }));
+            }, [dailyStates, dayParams.todayStr]);
 
             // Midnight Timer
             useEffect(() => {
@@ -1638,23 +1747,26 @@
                     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((diff % (1000 * 60)) / 1000);
                     setTimeToMidnight(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
-                    if (h === 0 && m === 0 && s === 0 && !params.isTestMode) window.location.reload();
+                    if (h === 0 && m === 0 && s === 0 && activeGame !== 'TEST_DRIVE') window.location.reload();
                 }, 1000);
                 return () => clearInterval(timer);
-            }, [params.isTestMode]);
+            }, [activeGame]);
 
             const triggerToast = (msg, isError = false) => { setToastObj({ msg, isError }); setTimeout(() => setToastObj({ msg: '', isError: false }), 4000); };
 
             const handleGameOver = (status, attempts) => {
-                if (params.isTestMode) {
+                if (activeGame === 'TEST_DRIVE') {
                     setTimeout(() => setShowStats(true), 1500);
                     return; 
                 }
 
+                const gameType = activeGame;
+                const maxAtt = dayParams.maxAttempts[gameType] || 5;
                 const timeTakenSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
-                const score = calculateScore(status === 'won', attempts, params.maxAttempts, timeTakenSeconds);
+                const score = calculateScore(status === 'won', attempts, maxAtt, timeTakenSeconds);
 
-                const currentStats = allStats[params.gameType] || { ...DEFAULT_STATS };
+                // Update Individual Game Stats
+                const currentStats = allStats[gameType] || { ...DEFAULT_STATS };
                 const newStats = { ...currentStats, played: currentStats.played + 1, lastScore: score };
                 if (status === 'won') {
                     newStats.wins += 1;
@@ -1662,12 +1774,31 @@
                     newStats.maxStreak = Math.max(newStats.maxStreak, newStats.currentStreak);
                 } else newStats.currentStreak = 0;
 
-                const updatedAllStats = { ...allStats, [params.gameType]: newStats };
+                const updatedAllStats = { ...allStats, [gameType]: newStats };
                 setAllStats(updatedAllStats);
-                localStorage.setItem('corpQuestStats_v6', JSON.stringify(updatedAllStats));
+                localStorage.setItem('corpQuestStats_v7', JSON.stringify(updatedAllStats));
                 
+                // Update Global Daily Streak
+                let newGlobalStats = { ...globalStats };
+                if (newGlobalStats.lastPlayedDate !== dayParams.todayStr) {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+                    
+                    if (newGlobalStats.lastPlayedDate === yesterdayStr) {
+                        newGlobalStats.currentStreak += 1;
+                    } else {
+                        newGlobalStats.currentStreak = 1; 
+                    }
+                    newGlobalStats.lastPlayedDate = dayParams.todayStr;
+                    newGlobalStats.maxStreak = Math.max(newGlobalStats.maxStreak, newGlobalStats.currentStreak);
+                    
+                    setGlobalStats(newGlobalStats);
+                    localStorage.setItem('corpQuestGlobal_v7', JSON.stringify(newGlobalStats));
+                }
+
                 if (auth.currentUser) {
-                    CloudDB.saveScore(currentUser || { uid: auth.currentUser.uid, name: auth.currentUser.displayName || auth.currentUser.email.split('@')[0] }, params.gameType, params.dayIndex, score, timeTakenSeconds);
+                    CloudDB.saveScore(currentUser || { uid: auth.currentUser.uid, name: auth.currentUser.displayName || auth.currentUser.email.split('@')[0] }, gameType, dayParams.dayIndex, score, timeTakenSeconds);
                 }
                 setTimeout(() => setShowStats(true), 1500);
             };
@@ -1675,12 +1806,12 @@
             const submitAdminPwd = () => {
                 if (adminPwd.trim() === ADMIN_PASSWORD) {
                     setShowAdminAuth(false); setAdminPwd(''); setShowAdmin(true);
-                } else { triggerToast("Password Salah!", true); }
+                } else { triggerToast("Incorrect Password!", true); }
             };
 
             const handleTestDrive = (type) => {
                 const fakeSeed = Math.floor(Math.random() * 1000000);
-                const puzzleData = generatePuzzleData(type, fakeSeed);
+                const puzzleData = window.generatePuzzleData(type, fakeSeed);
                 
                 let maxAttempts = 5;
                 if (type === 'JARGON_BUSTER') maxAttempts = 6;
@@ -1696,10 +1827,15 @@
                     const allItems = puzzleData.categories.flatMap(c => c.items);
                     initialGuess = { board: shuffleArray(allItems, rng), selected: [], solved: [] };
                 } else if (type === 'MINI_CROSSWORD') initialGuess = Array(16).fill('');
-                else if (type === 'WORDFLOWER') initialGuess = '';
 
-                setGameState({ history: [], currentGuess: initialGuess, status: 'playing' });
-                setParams({ dayIndex: 99999, gameType: type, puzzleData, maxAttempts, todayStr: 'TEST_MODE', rngSeed: fakeSeed, isTestMode: true });
+                setTestDriveState({
+                    gameType: type,
+                    puzzle: puzzleData,
+                    maxAttempts,
+                    gameState: { history: [], currentGuess: initialGuess, status: 'playing' }
+                });
+                
+                setActiveGame('TEST_DRIVE');
                 setGameStartTime(Date.now());
                 setShowAdmin(false);
                 setShowHelp(true);
@@ -1708,10 +1844,10 @@
 
             const handleLogin = async (user) => {
                 triggerToast(`Welcome back, ${user.name}!`);
-                if (gameState.status === 'won' && !params.isTestMode) {
-                    const stats = allStats[params.gameType];
+                if (activeGame && activeGame !== 'TEST_DRIVE' && dailyStates[activeGame]?.status === 'won') {
+                    const stats = allStats[activeGame];
                     if (stats && stats.lastScore > 0) {
-                        await CloudDB.saveScore(user, params.gameType, params.dayIndex, stats.lastScore, 60); 
+                        await CloudDB.saveScore(user, activeGame, dayParams.dayIndex, stats.lastScore, 60); 
                     }
                 }
             };
@@ -1724,7 +1860,7 @@
                 setIsCapturing(true);
                 setTimeout(async () => {
                     try {
-                        if (!window.html2canvas) { triggerToast("Sistem error: screenshot library belum termuat.", true); setIsCapturing(false); return; }
+                        if (!window.html2canvas) { triggerToast("System error: screenshot library not loaded.", true); setIsCapturing(false); return; }
                         const element = document.getElementById('capture-node');
                         if (!element) throw new Error("Capture node not found");
                         const originalRadius = element.style.borderRadius;
@@ -1732,14 +1868,14 @@
                         const canvas = await window.html2canvas(element, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
                         element.style.borderRadius = originalRadius; 
                         setShareImage(canvas.toDataURL('image/png'));
-                    } catch (err) { console.error(err); triggerToast("Gagal mengambil screenshot.", true); }
+                    } catch (err) { console.error(err); triggerToast("Failed to capture screenshot.", true); }
                     setIsCapturing(false);
                 }, 150);
             };
 
             const downloadImage = () => {
                 if (!shareImage) return;
-                const a = document.createElement('a'); a.href = shareImage; a.download = `CorpQuest-${params.todayStr}.png`; a.click();
+                const a = document.createElement('a'); a.href = shareImage; a.download = `CorpQuest-${dayParams.todayStr}.png`; a.click();
             };
 
             const shareToApps = async () => {
@@ -1747,38 +1883,75 @@
                 try {
                     const res = await fetch(shareImage);
                     const blob = await res.blob();
-                    const file = new File([blob], `CorpQuest-${params.todayStr}.png`, { type: 'image/png' });
+                    const file = new File([blob], `CorpQuest-${dayParams.todayStr}.png`, { type: 'image/png' });
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         await navigator.share({ title: 'My CorpQuest Result', files: [file] });
-                    } else { triggerToast("Browser ini tidak mendukung direct share. Silakan klik Save Image.", true); }
-                } catch (err) { console.error(err); triggerToast("Batal membagikan gambar.", true); }
+                    } else { triggerToast("Direct sharing not supported on this browser. Please click Save Image.", true); }
+                } catch (err) { console.error(err); triggerToast("Share cancelled.", true); }
+            };
+
+            const handleSelectGame = (id) => {
+                setActiveGame(id);
+                setGameStartTime(Date.now());
+                if (dailyStates[id]?.status !== 'playing') {
+                    // Already played, show stats directly
+                    setTimeout(() => setShowStats(true), 100);
+                } else if (!allStats[id]) {
+                    // First time playing this specific game mode
+                    setShowHelp(true);
+                }
+            };
+
+            const currentGameType = activeGame === 'TEST_DRIVE' ? testDriveState.gameType : activeGame;
+            const currentPuzzle = activeGame === 'TEST_DRIVE' ? testDriveState.puzzle : (activeGame ? dayParams.puzzles[activeGame] : null);
+            const currentMaxAttempts = activeGame === 'TEST_DRIVE' ? testDriveState.maxAttempts : (activeGame ? dayParams.maxAttempts[activeGame] : 5);
+            const currentGameState = activeGame === 'TEST_DRIVE' ? testDriveState.gameState : dailyStates[activeGame];
+            
+            const updateActiveGameState = (newStateFn) => {
+                if (!activeGame) return;
+                if (activeGame === 'TEST_DRIVE') {
+                    setTestDriveState(prev => ({ ...prev, gameState: typeof newStateFn === 'function' ? newStateFn(prev.gameState) : newStateFn }));
+                } else {
+                    setDailyStates(prev => {
+                        const oldState = prev[activeGame];
+                        const nextState = typeof newStateFn === 'function' ? newStateFn(oldState) : newStateFn;
+                        return { ...prev, [activeGame]: nextState };
+                    });
+                }
             };
 
             return (
                 <div className="max-w-md mx-auto min-h-screen flex flex-col relative bg-slate-50 shadow-2xl overflow-hidden">
-                    {gameState.status === 'won' && <Confetti />}
+                    {activeGame && currentGameState?.status === 'won' && <Confetti />}
                     <Toast message={toastObj.msg} isVisible={!!toastObj.msg} isError={toastObj.isError} />
                     
                     <header className="flex justify-between items-center p-4 border-b border-slate-200 bg-white sticky top-0 z-10 glass-panel">
                         <div className="flex-1 flex gap-1">
-                            <button onClick={() => setShowAdminAuth(true)} className="p-2 text-slate-400 hover:text-indigo-600 transition rounded-full hover:bg-indigo-50"><Icon name="shield" className="w-5 h-5" /></button>
-                            <button onClick={() => setShowHelp(true)} className="p-2 text-slate-400 hover:text-slate-800 transition rounded-full hover:bg-slate-100"><Icon name="help-circle" className="w-5 h-5" /></button>
+                            {activeGame ? (
+                                <button onClick={() => {setActiveGame(null); setTestDriveState(null);}} className="flex items-center gap-1 text-slate-500 font-bold text-sm hover:text-indigo-600 transition p-2 hover:bg-slate-100 rounded-lg">
+                                    <Icon name="chevron-left" className="w-5 h-5" /> Back
+                                </button>
+                            ) : (
+                                <button onClick={() => setShowAdminAuth(true)} className="p-2 text-slate-400 hover:text-indigo-600 transition rounded-full hover:bg-indigo-50"><Icon name="shield" className="w-5 h-5" /></button>
+                            )}
                         </div>
                         <div className="text-center shrink-0">
                             <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">CorpQuest</h1>
-                            <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{params.isTestMode ? `TEST: ${params.gameType.replace('_', ' ')}` : params.gameType.replace('_', ' ')}</p>
+                            <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{activeGame === 'TEST_DRIVE' ? `TEST: ${currentGameType.replace('_', ' ')}` : (activeGame ? activeGame.replace('_', ' ') : 'DAILY HUB')}</p>
                         </div>
                         <div className="flex-1 flex justify-end gap-1 relative">
-                            <button onClick={() => setShowStats(true)} className="p-2 text-slate-400 hover:text-slate-800 transition rounded-full hover:bg-slate-100 relative">
-                                <Icon name="bar-chart-2" className="w-5 h-5" />
-                                {gameState.status !== 'playing' && <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>}
-                            </button>
-                            <button onClick={() => currentUser ? setShowProfileMenu(!showProfileMenu) : setShowAuthModal(true)} className="p-2 text-slate-400 hover:text-slate-800 transition rounded-full hover:bg-slate-100 relative">
-                                <Icon name="user" className={`w-5 h-5 ${currentUser ? 'text-indigo-600' : ''}`} />
-                                {!currentUser && <span className="absolute top-2 right-2 w-2 h-2 bg-amber-400 rounded-full border border-white"></span>}
+                            {activeGame && (
+                                <button onClick={() => setShowHelp(true)} className="p-2 text-slate-400 hover:text-slate-800 transition rounded-full hover:bg-slate-100">
+                                    <Icon name="help-circle" className="w-5 h-5" />
+                                </button>
+                            )}
+                            <button onClick={() => activeGame ? setShowStats(true) : (currentUser ? setShowProfileMenu(!showProfileMenu) : setShowAuthModal(true))} className="p-2 text-slate-400 hover:text-slate-800 transition rounded-full hover:bg-slate-100 relative">
+                                {activeGame ? <Icon name="bar-chart-2" className="w-5 h-5" /> : <Icon name="user" className={`w-5 h-5 ${currentUser ? 'text-indigo-600' : ''}`} />}
+                                {activeGame && currentGameState?.status !== 'playing' && <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>}
+                                {!activeGame && !currentUser && <span className="absolute top-2 right-2 w-2 h-2 bg-amber-400 rounded-full border border-white"></span>}
                             </button>
                             
-                            {showProfileMenu && currentUser && (
+                            {showProfileMenu && currentUser && !activeGame && (
                                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 p-2 animate-pop z-50">
                                     <div className="px-3 py-2 border-b border-slate-100 mb-2">
                                         <p className="text-xs font-bold text-slate-800 truncate">{currentUser.name}</p>
@@ -1793,28 +1966,32 @@
                     </header>
 
                     <main className="flex-1 p-4 flex flex-col overflow-y-auto hide-scrollbar relative z-0">
-                        {params.gameType === 'JARGON_BUSTER' && <WordleGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} />}
-                        {params.gameType === 'PROCESS_FLOW' && <SequenceGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} />}
-                        {params.gameType === 'SYNERGY_SQUARE' && <SynergyGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} triggerToast={triggerToast} />}
-                        {params.gameType === 'MINI_CROSSWORD' && <CrosswordGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} />}
-                        {params.gameType === 'WORDFLOWER' && <WordflowerGame puzzle={params.puzzleData} maxAttempts={params.maxAttempts} gameState={gameState} setGameState={setGameState} onGameOver={handleGameOver} triggerToast={triggerToast} />}
+                        {!activeGame && <Dashboard dailyStates={dailyStates} activeGameTypes={dayParams.activeGameTypes} onSelectGame={handleSelectGame} globalStats={globalStats} />}
+                        
+                        {activeGame && currentGameType === 'JARGON_BUSTER' && <WordleGame puzzle={currentPuzzle} maxAttempts={currentMaxAttempts} gameState={currentGameState} setGameState={updateActiveGameState} onGameOver={handleGameOver} />}
+                        {activeGame && currentGameType === 'PROCESS_FLOW' && <SequenceGame puzzle={currentPuzzle} maxAttempts={currentMaxAttempts} gameState={currentGameState} setGameState={updateActiveGameState} onGameOver={handleGameOver} />}
+                        {activeGame && currentGameType === 'SYNERGY_SQUARE' && <SynergyGame puzzle={currentPuzzle} maxAttempts={currentMaxAttempts} gameState={currentGameState} setGameState={updateActiveGameState} onGameOver={handleGameOver} triggerToast={triggerToast} />}
+                        {activeGame && currentGameType === 'MINI_CROSSWORD' && <CrosswordGame puzzle={currentPuzzle} maxAttempts={currentMaxAttempts} gameState={currentGameState} setGameState={updateActiveGameState} onGameOver={handleGameOver} />}
+                        {activeGame && currentGameType === 'WORDFLOWER' && <WordflowerGame puzzle={currentPuzzle} maxAttempts={currentMaxAttempts} gameState={currentGameState} setGameState={updateActiveGameState} onGameOver={handleGameOver} triggerToast={triggerToast} />}
                     </main>
 
                     <AuthModal isVisible={showAuthModal} onClose={() => setShowAuthModal(false)} onLogin={handleLogin} triggerToast={triggerToast} />
 
-                    <Modals showHelp={showHelp} setShowHelp={setShowHelp} showStats={showStats} setShowStats={setShowStats} stats={allStats[params.gameType] || DEFAULT_STATS} timeToMidnight={timeToMidnight} handleShare={handleShare} gameType={params.gameType} gameStatus={gameState.status} puzzle={params.puzzleData} shareImage={shareImage} setShareImage={setShareImage} isCapturing={isCapturing} downloadImage={downloadImage} shareToApps={shareToApps} currentUser={currentUser} onOpenAuth={() => { setShowStats(false); setShowAuthModal(true); }} dayIndex={params.dayIndex} isTestMode={params.isTestMode} />
+                    {activeGame && (
+                        <Modals showHelp={showHelp} setShowHelp={setShowHelp} showStats={showStats} setShowStats={setShowStats} stats={activeGame === 'TEST_DRIVE' ? DEFAULT_STATS : (allStats[activeGame] || DEFAULT_STATS)} timeToMidnight={timeToMidnight} handleShare={handleShare} gameType={currentGameType} gameStatus={currentGameState?.status} puzzle={currentPuzzle} shareImage={shareImage} setShareImage={setShareImage} isCapturing={isCapturing} downloadImage={downloadImage} shareToApps={shareToApps} currentUser={currentUser} onOpenAuth={() => { setShowStats(false); setShowAuthModal(true); }} dayIndex={dayParams.dayIndex} isTestMode={activeGame === 'TEST_DRIVE'} />
+                    )}
                     
-                    <AdminPanel isVisible={showAdmin} onClose={() => setShowAdmin(false)} currentDayIndex={params.dayIndex} onTestDrive={handleTestDrive} />
+                    <AdminPanel isVisible={showAdmin} onClose={() => setShowAdmin(false)} currentDayIndex={dayParams.dayIndex} onTestDrive={handleTestDrive} />
 
                     {showAdminAuth && (
                         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
                             <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-pop text-center">
                                 <h3 className="font-bold text-lg mb-2">Admin Access</h3>
-                                <p className="text-sm text-slate-500 mb-4">Masukkan password untuk melihat jawaban.</p>
+                                <p className="text-sm text-slate-500 mb-4">Enter password to access the portal.</p>
                                 <input type="password" value={adminPwd} onChange={(e) => setAdminPwd(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitAdminPwd()} className="w-full p-3 border border-slate-200 rounded-xl mb-4 text-center tracking-widest focus:outline-indigo-500" placeholder="••••••••" />
                                 <div className="flex gap-2">
-                                    <button onClick={() => {setShowAdminAuth(false); setAdminPwd('');}} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200">Batal</button>
-                                    <button onClick={submitAdminPwd} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700">Masuk</button>
+                                    <button onClick={() => {setShowAdminAuth(false); setAdminPwd('');}} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200">Cancel</button>
+                                    <button onClick={submitAdminPwd} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700">Enter</button>
                                 </div>
                             </div>
                         </div>
