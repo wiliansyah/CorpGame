@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CorpQuest | Daily Corporate Logic</title>
     
+    <!-- Script Anti-DevTools (Dimatikan sementara untuk debugging) -->
+    <!--
     <script>
         document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
         document.onkeydown = function(e) {
@@ -15,14 +17,24 @@
             if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; } 
         }
     </script>
+    -->
 
+    <!-- Dependencies -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
+    <!-- Konfigurasi Babel Classic Runtime untuk mengatasi error "jsx-runtime" -->
+    <script>
+        Babel.registerPreset('corp-preset', {
+            presets: [
+                [Babel.availablePresets['react'], { runtime: 'classic' }]
+            ]
+        });
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -32,7 +44,6 @@
     <script>
         window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
-    <script src="/_vercel/insights/script.js"></script>
 
     <script>
         tailwind.config = {
@@ -131,7 +142,8 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
+    <!-- Gunakan preset yang baru dibuat: corp-preset -->
+    <script type="text/babel" data-presets="corp-preset">
         const { useState, useEffect, useCallback, useRef } = React;
 
         const Icon = ({ name, className }) => {
